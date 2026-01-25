@@ -1,11 +1,16 @@
 package com.andrewsmith.financestracker.model;
 
-import org.yaml.snakeyaml.tokens.ScalarToken;
+import jakarta.persistence.*;
 
+@Entity
 public class Category {
-    private Long id;
-    private String name;
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
 
     public Category() {}
 

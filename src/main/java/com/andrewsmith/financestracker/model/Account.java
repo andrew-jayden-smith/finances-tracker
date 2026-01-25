@@ -1,16 +1,30 @@
 package com.andrewsmith.financestracker.model;
 
-import org.springframework.cglib.core.Local;
+import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Entity
 public class Account {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private String name;
+
+    @Column(nullable = false)
     private BigDecimal openingBalance;
+
+    @Column(nullable = false)
     private LocalDateTime openingDate;
+
+    @ManyToOne
+    @JoinColumn(name = "userId", nullable = false)
     private User user;
+
 
     public Account() {}
 

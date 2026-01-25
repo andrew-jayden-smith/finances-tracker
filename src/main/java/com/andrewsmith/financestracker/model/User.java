@@ -1,14 +1,28 @@
 package com.andrewsmith.financestracker.model;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+@Entity
 public class User {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true)
     private String username;
+
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
     private String passwordHash;
+
+    @Column(nullable = false)
     private LocalDateTime date;
+
+    @Column(nullable = false)
     private boolean enabled;
 
     public User() {}

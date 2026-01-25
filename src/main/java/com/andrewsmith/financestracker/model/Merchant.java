@@ -1,7 +1,15 @@
 package com.andrewsmith.financestracker.model;
 
+import jakarta.persistence.*;
+
+@Entity
 public class Merchant {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private String name;
 
     // Mapper
