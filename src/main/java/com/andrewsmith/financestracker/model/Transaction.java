@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "userTransactions")
 public class Transaction {
 
     // Database id
@@ -21,6 +22,8 @@ public class Transaction {
 
     // Transaction Data
     private BigDecimal amount;
+
+    @Column(nullable = false)
     private LocalDateTime date;
 
     @Enumerated(EnumType.STRING)
