@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends CrudRepository<User, Long>, JpaSpecificationExecutor<User> {
-    User finByEmail(String email);
+    User findByEmail(String email);
     User findByUsername(String username);
     Boolean existsByEmail(String email);
     Boolean existsByUsername(String username);
