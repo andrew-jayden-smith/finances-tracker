@@ -8,7 +8,7 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.List;
 
 public interface CategoryRepository extends CrudRepository<Category, Long>, JpaSpecificationExecutor<Category> {
-    Category findByName(String name);
+    Category findCategoriesByName(String name);
     boolean existsByName(String name);
-    List<Category> findByNameContainingIgnoreCase(String name);
+    List<Category> findCategoriesByNameIgnoringCase(String name);
 }
