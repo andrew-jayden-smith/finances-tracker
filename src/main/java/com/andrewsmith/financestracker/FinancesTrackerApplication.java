@@ -23,11 +23,13 @@ public class FinancesTrackerApplication {
         return args -> {
             System.out.println("Testing UserService Class: ");
 
-            Optional<User> user = userService.getUserByUsername("smithdr3w");
-            Optional<User> userEmail = userService.getUserByEmail("smithdrew867@gmail.com");
+            Optional<User> user = userService.getUserByUsername("smithdrew");
+            Optional<User> userEmail = userService.getUserByEmail("smithdrew@gmail.com");
 
             System.out.println("Found User? " + user.isPresent());
             System.out.println("Found User Email? " + userEmail.isPresent());
+
+
 
         };
     }
