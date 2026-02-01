@@ -25,6 +25,7 @@ public class User {
     @Column(nullable = false)
     private boolean enabled;
 
+    // Spring constructor
     public User() {}
 
     // New user registration Constructor
@@ -35,6 +36,16 @@ public class User {
         this.date = LocalDateTime.now();
         this.enabled = true;
     }
+
+    // Initialize the date and time and enable account
+    @PrePersist
+    protected void onCreate() {
+        if (date == null) {
+            date = LocalDateTime.now();
+        }
+        enabled = true;
+    }
+
 
     // Database Constructor
     public User(Long id, String username, String email, String passwordHash, LocalDateTime date, boolean enabled) {
@@ -55,8 +66,16 @@ public class User {
         return username;
     }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     public String getEmail() {
         return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPasswordHash() {
