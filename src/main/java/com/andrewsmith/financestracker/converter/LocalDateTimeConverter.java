@@ -1,13 +1,16 @@
 package com.andrewsmith.financestracker.converter;
-import jakarta.persistence.*;
+
 import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Converter(autoApply = true)
 public class LocalDateTimeConverter implements AttributeConverter<LocalDateTime, String> {
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    // Match the database format: "yyyy-MM-dd HH:mm:ss" (space between date and time)
+    private static final DateTimeFormatter FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public String convertToDatabaseColumn(LocalDateTime attribute) {

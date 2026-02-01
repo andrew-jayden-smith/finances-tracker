@@ -1,14 +1,291 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Login to Accounts</title>
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login to Accounts</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0f0d;
+            --bg-card: #131a17;
+            --bg-input: #0f1613;
+            --green-main: #3ecf8e;
+            --green-dim: rgba(62, 207, 142, 0.15);
+            --green-glow: rgba(62, 207, 142, 0.35);
+            --text-primary: #eef2f0;
+            --text-muted: #7a8f85;
+            --border: rgba(62, 207, 142, 0.2);
+        }
 
-    <body>
-        <form method="POST" action="/user/login">
-            <input type="text" name="username" placeholder="Username">
-            <input type="password" name="password" placeholder="Password">
-            <button type="submit">Login</button>
-        </form>
-    </body>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Atmospheric background orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.18;
+            pointer-events: none;
+        }
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: #2aad72;
+            top: -100px;
+            left: -100px;
+        }
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: #1e7a52;
+            bottom: -80px;
+            right: -80px;
+        }
+        .orb-3 {
+            width: 200px;
+            height: 200px;
+            background: #3ecf8e;
+            top: 50%;
+            left: 60%;
+            opacity: 0.08;
+        }
+
+        /* Card */
+        .login-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 400px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 44px 36px 36px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Logo / Icon */
+        .logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: var(--green-dim);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: var(--green-main);
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .logo-text {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .logo-text span {
+            color: var(--green-main);
+        }
+
+        /* Heading */
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+        }
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        /* Form */
+        .field {
+            margin-bottom: 18px;
+        }
+        .field label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+        .input-wrap {
+            position: relative;
+        }
+        .input-wrap .icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            stroke: var(--text-muted);
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: stroke 0.3s;
+        }
+        .input-wrap input {
+            width: 100%;
+            padding: 13px 16px 13px 42px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.92rem;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .input-wrap input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+        .input-wrap input:focus {
+            border-color: var(--green-main);
+            box-shadow: 0 0 0 3px var(--green-dim);
+        }
+        .input-wrap input:focus + .icon,
+        .input-wrap input:focus ~ .icon {
+            stroke: var(--green-main);
+        }
+        /* re-order so icon reacts to focus */
+        .input-wrap .icon { order: -1; }
+
+        /* Login button */
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            margin-top: 8px;
+            background: var(--green-main);
+            color: #0a0f0d;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Syne', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: background 0.25s, box-shadow 0.25s, transform 0.15s;
+        }
+        .login-btn:hover {
+            background: #4fe8a0;
+            box-shadow: 0 4px 24px var(--green-glow);
+        }
+        .login-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* Footer links */
+        .footer-links {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+        }
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.82rem;
+            transition: color 0.2s;
+        }
+        .footer-links a:hover {
+            color: var(--green-main);
+        }
+        .footer-links .sign-up {
+            color: var(--green-main);
+            font-weight: 500;
+        }
+        .footer-links .sign-up:hover {
+            color: #4fe8a0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Background Orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- Login Card -->
+<div class="login-container">
+
+    <!-- Logo -->
+    <div class="logo-wrap">
+        <div class="logo-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="logo-text">Fin<span>Track</span></div>
+    </div>
+
+    <!-- Heading -->
+    <h1>Welcome back</h1>
+    <p class="subtitle">Sign in to manage your finances</p>
+
+    <!-- Form -->
+    <form method="POST" action="/user/login">
+        <div class="field">
+            <label>Username or Email</label>
+            <div class="input-wrap">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="8" r="4"/></svg>
+                <input type="text" name="username" placeholder="Enter your username or email">
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Password</label>
+            <div class="input-wrap">
+                <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <input type="password" name="password" placeholder="Enter your password">
+            </div>
+        </div>
+
+        <button type="submit" class="login-btn">Login</button>
+    </form>
+
+    <!-- Footer -->
+    <div class="footer-links">
+        <a href="/">Forgot password?</a>
+        <a href="/user/register" class="sign-up">Sign up</a>
+    </div>
+</div>
+
+</body>
+</html>
