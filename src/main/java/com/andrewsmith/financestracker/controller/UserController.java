@@ -45,8 +45,7 @@ public class UserController {
         // 3. Load accounts for users
         model.addAttribute("user", user);
         model.addAttribute("accounts", userService.getUserAccounts(user));
-        // Return to the home/dashboard.html page if credentials match
-        return "dashboard";
+        return "redirect:/account/dashboard?username=" + username;
     }
 
     // Register user Page through register.html

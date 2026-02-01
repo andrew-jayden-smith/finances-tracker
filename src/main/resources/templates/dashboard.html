@@ -1,10 +1,345 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>DASHBOARD!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - FinanceTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0f0d;
+            --bg-card: #131a17;
+            --bg-input: #0f1613;
+            --green-main: #3ecf8e;
+            --green-dim: rgba(62, 207, 142, 0.15);
+            --green-glow: rgba(62, 207, 142, 0.35);
+            --text-primary: #eef2f0;
+            --text-muted: #7a8f85;
+            --border: rgba(62, 207, 142, 0.2);
+            --red: #e05a5a;
+            --red-dim: rgba(224, 90, 90, 0.15);
+            --blue: #5aafe8;
+            --blue-dim: rgba(90, 175, 232, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .orb-1 { width: 500px; height: 500px; background: #2aad72; opacity: 0.1; top: -200px; left: -150px; }
+        .orb-2 { width: 350px; height: 350px; background: #1e7a52; opacity: 0.12; bottom: -100px; right: -100px; }
+        .orb-3 { width: 250px; height: 250px; background: #3ecf8e; opacity: 0.06; top: 50%; left: 55%; }
+
+        .page-wrap { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 28px 24px 60px; }
+
+        /* Topbar */
+        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; }
+        .logo-wrap { display: flex; align-items: center; gap: 12px; }
+        .logo-icon {
+            width: 40px; height: 40px;
+            background: var(--green-dim); border: 1px solid var(--border);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+        }
+        .logo-icon svg { width: 20px; height: 20px; stroke: var(--green-main); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .logo-text { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; }
+        .logo-text span { color: var(--green-main); }
+
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .user-badge {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 7px 14px 7px 8px;
+        }
+        .avatar {
+            width: 30px; height: 30px; border-radius: 8px;
+            background: var(--green-dim); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 700; color: var(--green-main);
+        }
+        .user-name { font-size: 0.82rem; font-weight: 500; }
+        .logout-btn {
+            background: none; border: 1px solid var(--border); color: var(--text-muted);
+            border-radius: 8px; padding: 7px 12px; font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem; cursor: pointer; transition: border-color 0.2s, color 0.2s;
+            display: flex; align-items: center; gap: 6px; text-decoration: none;
+        }
+        .logout-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+        /* Summary cards */
+        .summary-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+        .summary-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 22px 20px; position: relative; overflow: hidden;
+        }
+        .summary-card .accent-dot {
+            position: absolute; top: -20px; right: -20px;
+            width: 80px; height: 80px; border-radius: 50%; opacity: 0.12;
+        }
+        .summary-card .card-label {
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;
+            color: var(--text-muted); font-weight: 500; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .summary-card .card-label svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .summary-card .card-value { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
+        .summary-card .card-sub { font-size: 0.76rem; color: var(--text-muted); margin-top: 4px; }
+
+        .sc-green .accent-dot { background: var(--green-main); }
+        .sc-green .card-label { color: var(--green-main); }
+        .sc-red .accent-dot { background: var(--red); }
+        .sc-red .card-label { color: var(--red); }
+        .sc-blue .accent-dot { background: var(--blue); }
+        .sc-blue .card-label { color: var(--blue); }
+
+        /* Section header */
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .section-header h2 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; }
+        .add-btn {
+            display: flex; align-items: center; gap: 7px;
+            background: var(--green-dim); border: 1px solid var(--border); color: var(--green-main);
+            border-radius: 10px; padding: 8px 16px; font-family: 'DM Sans', sans-serif;
+            font-size: 0.82rem; font-weight: 500; cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s; text-decoration: none;
+        }
+        .add-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+        .add-btn:hover { background: var(--green-glow); box-shadow: 0 2px 14px var(--green-dim); }
+
+        /* Account list */
+        .account-list { display: flex; flex-direction: column; gap: 10px; }
+        .account-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 18px 20px;
+            display: flex; align-items: center; gap: 16px;
+            transition: border-color 0.25s, box-shadow 0.25s;
+            animation: slideUp 0.35s ease both;
+        }
+        .account-card:hover { border-color: rgba(62,207,142,0.4); box-shadow: 0 4px 20px rgba(0,0,0,0.25); }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .acct-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--green-dim); color: var(--green-main);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; flex-shrink: 0;
+        }
+        .acct-info { flex: 1; min-width: 0; }
+        .acct-name { font-weight: 500; font-size: 0.92rem; margin-bottom: 3px; }
+        .acct-date { font-size: 0.76rem; color: var(--text-muted); }
+        .acct-balance { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; text-align: right; flex-shrink: 0; }
+        .acct-balance.positive { color: var(--green-main); }
+        .acct-balance.negative { color: var(--red); }
+        .acct-balance.zero { color: var(--text-muted); }
+
+        .acct-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .icon-btn {
+            width: 34px; height: 34px; border-radius: 8px;
+            border: 1px solid var(--border); background: transparent; color: var(--text-muted);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+        }
+        .icon-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .icon-btn:hover { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center; padding: 52px 20px;
+            background: var(--bg-card); border: 1px dashed var(--border); border-radius: 16px;
+        }
+        .empty-state .empty-icon {
+            width: 56px; height: 56px; margin: 0 auto 16px;
+            background: var(--green-dim); border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .empty-state .empty-icon svg { width: 26px; height: 26px; stroke: var(--green-main); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .empty-state h3 { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+        .empty-state p { color: var(--text-muted); font-size: 0.82rem; }
+
+        /* Error banner */
+        .error-banner {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--red-dim); border: 1px solid var(--red);
+            border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;
+        }
+        .error-banner svg { width: 18px; height: 18px; stroke: var(--red); fill: none; stroke-width: 2; flex-shrink: 0; }
+        .error-banner span { color: var(--red); font-size: 0.85rem; }
+
+        /* Delete form inline */
+        .delete-form { margin: 0; }
+
+        @media (max-width: 600px) {
+            .summary-row { grid-template-columns: 1fr; }
+            .account-card { flex-wrap: wrap; }
+            .acct-balance { order: 2; flex-basis: calc(100% - 60px); margin-left: 60px; margin-top: -8px; }
+        }
+    </style>
 </head>
 <body>
-<h1>DASHBOARD!!!</h1>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div class="page-wrap">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="logo-wrap">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <div class="logo-text">Finance<span>Track</span></div>
+        </div>
+        <div class="topbar-right">
+            <div class="user-badge">
+                <div class="avatar" th:text="${user.getUsername().substring(0,1).toUpperCase()}">U</div>
+                <div class="user-name" th:text="${user.getUsername()}">User</div>
+            </div>
+            <!-- Logout: just links back to login -->
+            <a href="/user/login" class="logout-btn">
+                <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- Error banner -->
+    <div th:if="${error}" class="error-banner">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span th:text="${error}">Error</span>
+    </div>
+
+    <!-- Summary Cards -->
+    <!--
+        Controller passes:
+          totalAssets        = sum of balances >= 0
+          totalLiabilities   = sum of balances <  0  (negative number)
+        We derive netWorth   = totalAssets + totalLiabilities
+    -->
+    <div class="summary-row">
+
+        <!-- Net Worth -->
+        <div class="summary-card sc-green">
+            <div class="accent-dot"></div>
+            <div class="card-label">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Net Worth
+            </div>
+            <!-- positive net worth -->
+            <div th:if="${netWorth.signum() >= 0}"
+                 class="card-value"
+                 th:text="${'$' + #numbers.formatDecimal(netWorth, 1, 2)}">$0.00</div>
+            <!-- negative net worth -->
+            <div th:if="${netWorth.signum() < 0}"
+                 class="card-value" style="color: var(--red);"
+                 th:text="${'-$' + #numbers.formatDecimal(netWorth.abs(), 1, 2)}">$0.00</div>
+            <div class="card-sub" th:text="${'across ' + accounts.size() + ' account' + (accounts.size() != 1 ? 's' : '')}">across 0 accounts</div>
+        </div>
+
+        <!-- Total Assets -->
+        <div class="summary-card sc-blue">
+            <div class="accent-dot"></div>
+            <div class="card-label">
+                <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                Total Assets
+            </div>
+            <div class="card-value" th:text="${'$' + #numbers.formatDecimal(totalAssets, 1, 2)}">$0.00</div>
+            <div class="card-sub">positive balances</div>
+        </div>
+
+        <!-- Total Liabilities -->
+        <div class="summary-card sc-red">
+            <div class="accent-dot"></div>
+            <div class="card-label">
+                <svg viewBox="0 0 24 24"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+                Total Liabilities
+            </div>
+            <!-- totalLiabilities is negative from controller, display as positive with $ -->
+            <div class="card-value" th:text="${'$' + #numbers.formatDecimal(totalLiabilities.abs(), 1, 2)}">$0.00</div>
+            <div class="card-sub">negative balances</div>
+        </div>
+    </div>
+
+    <!-- Accounts Section Header -->
+    <div class="section-header">
+        <h2>My Accounts</h2>
+        <!-- Links to GET /account/create?username=... which renders account-create view -->
+        <a th:href="@{/account/create(username=${user.getUsername()})}" class="add-btn">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Account
+        </a>
+    </div>
+
+    <!-- Account List -->
+    <div class="account-list">
+
+        <!-- Empty state when no accounts -->
+        <div th:if="${accounts.isEmpty()}" class="empty-state">
+            <div class="empty-icon">
+                <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <h3>No accounts yet</h3>
+            <p>Tap "New Account" to add your first one</p>
+        </div>
+
+        <!-- Iterate over accounts -->
+        <div th:each="account, iter : ${accounts}"
+             class="account-card"
+             th:style="${'animation-delay:' + (iter.index * 0.06) + 's'}">
+
+            <!-- Icon: first letter of account name -->
+            <div class="acct-icon" th:text="${account.getName().substring(0,1).toUpperCase()}">A</div>
+
+            <!-- Name + date -->
+            <div class="acct-info">
+                <div class="acct-name" th:text="${account.getName()}">Account Name</div>
+                <div class="acct-date" th:text="${'Opened ' + #temporals.format(account.getOpeningDate(), 'MMM d, yyyy')}">Opened Jan 1, 2025</div>
+            </div>
+
+            <!-- Balance: positive -->
+            <div th:if="${account.getOpeningBalance().signum() > 0}"
+                 class="acct-balance positive"
+                 th:text="${'$' + #numbers.formatDecimal(account.getOpeningBalance(), 1, 2)}">$0.00</div>
+            <!-- Balance: negative -->
+            <div th:if="${account.getOpeningBalance().signum() < 0}"
+                 class="acct-balance negative"
+                 th:text="${'-$' + #numbers.formatDecimal(account.getOpeningBalance().abs(), 1, 2)}">$0.00</div>
+            <!-- Balance: zero -->
+            <div th:if="${account.getOpeningBalance().signum() == 0}"
+                 class="acct-balance zero">$0.00</div>
+
+            <!-- Delete button: POSTs to /account/delete/{id}?username=... -->
+            <div class="acct-actions">
+                <form th:action="@{/account/delete/{id}(id=${account.getId()})}" method="POST" class="delete-form">
+                    <input type="hidden" name="username" th:value="${user.getUsername()}">
+                    <button type="submit" class="icon-btn" title="Delete account"
+                            onclick="return confirm('Remove this account?')">
+                        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
 </body>
 </html>
