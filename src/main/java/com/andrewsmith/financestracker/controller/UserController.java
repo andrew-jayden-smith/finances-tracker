@@ -33,6 +33,7 @@ public class UserController {
     public String authenticateLogin(@RequestParam String username, @RequestParam String password, Model model) {
         // 1. Get User by username or email by if statement
         User user = userService.getUserByUsername(username).orElse(null);
+
         if (user == null) {
             model.addAttribute("error", "User Not Found!");
             return "login";

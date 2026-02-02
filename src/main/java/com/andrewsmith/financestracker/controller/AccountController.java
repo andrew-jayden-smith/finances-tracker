@@ -72,7 +72,7 @@ public class AccountController {
         }
         account.setUser(user);
         account.setOpeningDate(LocalDateTime.now());
-        account.setOpeningBalance(BigDecimal.ZERO);
+        // account.setOpeningBalance(BigDecimal.ZERO);
         accountService.createAccount(account);
         return "redirect:/account/dashboard?username=" + username;
     }

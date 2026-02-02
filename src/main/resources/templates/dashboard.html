@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - FinanceTrack</title>
+    <title>Dashboard - FinTrack</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -182,8 +182,112 @@
         .error-banner svg { width: 18px; height: 18px; stroke: var(--red); fill: none; stroke-width: 2; flex-shrink: 0; }
         .error-banner span { color: var(--red); font-size: 0.85rem; }
 
-        /* Delete form inline */
         .delete-form { margin: 0; }
+
+        /* ========== MODAL ========== */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px 28px 28px;
+            width: 90%;
+            max-width: 420px;
+            transform: translateY(16px) scale(0.97);
+            transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+            position: relative;
+        }
+        .modal-overlay.active .modal { transform: translateY(0) scale(1); }
+
+        .modal-close {
+            position: absolute; top: 16px; right: 16px;
+            width: 30px; height: 30px;
+            border-radius: 8px; border: 1px solid var(--border);
+            background: transparent; color: var(--text-muted);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .modal-close:hover { border-color: var(--red); color: var(--red); }
+        .modal-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+
+        .modal h2 { font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
+        .modal .modal-sub { color: var(--text-muted); font-size: 0.82rem; margin-bottom: 24px; }
+
+        /* Modal form fields */
+        .m-field { margin-bottom: 16px; }
+        .m-field label {
+            display: block; font-size: 0.75rem; font-weight: 500;
+            color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 0.8px; margin-bottom: 7px;
+        }
+        .m-input-wrap { position: relative; }
+        .m-input-wrap .m-icon {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            width: 17px; height: 17px;
+            stroke: var(--text-muted); fill: none; stroke-width: 2;
+            stroke-linecap: round; stroke-linejoin: round;
+            pointer-events: none; z-index: 1; transition: stroke 0.3s;
+        }
+        .m-input-wrap input {
+            width: 100%;
+            padding: 12px 14px 12px 40px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .m-input-wrap input::placeholder { color: var(--text-muted); opacity: 0.6; }
+        .m-input-wrap input:focus {
+            border-color: var(--green-main);
+            box-shadow: 0 0 0 3px var(--green-dim);
+        }
+        .m-input-wrap input:focus ~ .m-icon { stroke: var(--green-main); }
+
+        /* Balance row: sign toggle + input side by side */
+        .balance-row { display: flex; gap: 8px; }
+        .sign-toggle {
+            display: flex; border-radius: 11px; overflow: hidden;
+            border: 1px solid var(--border); flex-shrink: 0;
+        }
+        .sign-btn {
+            width: 38px; background: var(--bg-input); border: none;
+            color: var(--text-muted); font-size: 1.1rem; cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .sign-btn.active { background: var(--green-dim); color: var(--green-main); }
+        .sign-btn.active.neg { background: var(--red-dim); color: var(--red); }
+        .sign-btn:hover:not(.active) { background: rgba(255,255,255,0.04); }
+        .balance-row .m-input-wrap { flex: 1; }
+
+        .m-field-error { font-size: 0.73rem; color: var(--red); margin-top: 5px; opacity: 0; transition: opacity 0.2s; }
+        .m-field.error .m-input-wrap input { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-dim); }
+        .m-field.error .m-field-error { opacity: 1; }
+
+        .modal-submit {
+            width: 100%; padding: 13px; margin-top: 6px;
+            background: var(--green-main); color: #0a0f0d;
+            border: none; border-radius: 11px;
+            font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700;
+            cursor: pointer;
+            transition: background 0.25s, box-shadow 0.25s, transform 0.15s;
+        }
+        .modal-submit:hover { background: #4fe8a0; box-shadow: 0 4px 20px var(--green-glow); }
+        .modal-submit:active { transform: scale(0.97); }
 
         @media (max-width: 600px) {
             .summary-row { grid-template-columns: 1fr; }
@@ -213,7 +317,6 @@
                 <div class="avatar" th:text="${user.getUsername().substring(0,1).toUpperCase()}">U</div>
                 <div class="user-name" th:text="${user.getUsername()}">User</div>
             </div>
-            <!-- Logout: just links back to login -->
             <a href="/user/login" class="logout-btn">
                 <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                 Logout
@@ -228,12 +331,7 @@
     </div>
 
     <!-- Summary Cards -->
-    <!--
-        Controller passes:
-          totalAssets        = sum of balances >= 0
-          totalLiabilities   = sum of balances <  0  (negative number)
-        We derive netWorth   = totalAssets + totalLiabilities
-    -->
+    <!-- Controller passes: user, accounts, totalAssets, totalLiabilities, netWorth -->
     <div class="summary-row">
 
         <!-- Net Worth -->
@@ -243,13 +341,9 @@
                 <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                 Net Worth
             </div>
-            <!-- positive net worth -->
-            <div th:if="${netWorth.signum() >= 0}"
-                 class="card-value"
+            <div th:if="${netWorth.signum() >= 0}" class="card-value"
                  th:text="${'$' + #numbers.formatDecimal(netWorth, 1, 2)}">$0.00</div>
-            <!-- negative net worth -->
-            <div th:if="${netWorth.signum() < 0}"
-                 class="card-value" style="color: var(--red);"
+            <div th:if="${netWorth.signum() < 0}" class="card-value" style="color: var(--red);"
                  th:text="${'-$' + #numbers.formatDecimal(netWorth.abs(), 1, 2)}">$0.00</div>
             <div class="card-sub" th:text="${'across ' + accounts.size() + ' account' + (accounts.size() != 1 ? 's' : '')}">across 0 accounts</div>
         </div>
@@ -272,7 +366,6 @@
                 <svg viewBox="0 0 24 24"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
                 Total Liabilities
             </div>
-            <!-- totalLiabilities is negative from controller, display as positive with $ -->
             <div class="card-value" th:text="${'$' + #numbers.formatDecimal(totalLiabilities.abs(), 1, 2)}">$0.00</div>
             <div class="card-sub">negative balances</div>
         </div>
@@ -281,17 +374,16 @@
     <!-- Accounts Section Header -->
     <div class="section-header">
         <h2>My Accounts</h2>
-        <!-- Links to GET /account/create?username=... which renders account-create view -->
-        <a th:href="@{/account/create(username=${user.getUsername()})}" class="add-btn">
+        <button class="add-btn" onclick="openModal()">
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Account
-        </a>
+        </button>
     </div>
 
     <!-- Account List -->
     <div class="account-list">
 
-        <!-- Empty state when no accounts -->
+        <!-- Empty state -->
         <div th:if="${accounts.isEmpty()}" class="empty-state">
             <div class="empty-icon">
                 <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
@@ -300,46 +392,144 @@
             <p>Tap "New Account" to add your first one</p>
         </div>
 
-        <!-- Iterate over accounts -->
-        <div th:each="account, iter : ${accounts}"
-             class="account-card"
-             th:style="${'animation-delay:' + (iter.index * 0.06) + 's'}">
+        <!-- Account cards -->
+        <a th:each="account, iter : ${accounts}"
+           th:href="@{/transaction/account/{id}(id=${account.getId()}, username=${user.getUsername()})}"
+           style="text-decoration: none; color: inherit; display: block;">
+            <div class="account-card"
+                 th:style="${'animation-delay:' + (iter.index * 0.06) + 's'}">
 
-            <!-- Icon: first letter of account name -->
-            <div class="acct-icon" th:text="${account.getName().substring(0,1).toUpperCase()}">A</div>
+                <div class="acct-icon" th:text="${account.getName().substring(0,1).toUpperCase()}">A</div>
 
-            <!-- Name + date -->
-            <div class="acct-info">
-                <div class="acct-name" th:text="${account.getName()}">Account Name</div>
-                <div class="acct-date" th:text="${'Opened ' + #temporals.format(account.getOpeningDate(), 'MMM d, yyyy')}">Opened Jan 1, 2025</div>
+                <div class="acct-info">
+                    <div class="acct-name" th:text="${account.getName()}">Account Name</div>
+                    <div class="acct-date" th:text="${'Opened ' + #temporals.format(account.getOpeningDate(), 'MMM d, yyyy')}">Opened Jan 1, 2025</div>
+                </div>
+
+                <!-- Balance positive -->
+                <div th:if="${account.getOpeningBalance().signum() > 0}"
+                     class="acct-balance positive"
+                     th:text="${'$' + #numbers.formatDecimal(account.getOpeningBalance(), 1, 2)}">$0.00</div>
+                <!-- Balance negative -->
+                <div th:if="${account.getOpeningBalance().signum() < 0}"
+                     class="acct-balance negative"
+                     th:text="${'-$' + #numbers.formatDecimal(account.getOpeningBalance().abs(), 1, 2)}">$0.00</div>
+                <!-- Balance zero -->
+                <div th:if="${account.getOpeningBalance().signum() == 0}"
+                     class="acct-balance zero">$0.00</div>
+
+                <!-- Delete -->
+                <div class="acct-actions">
+                    <form th:action="@{/account/delete/{id}(id=${account.getId()})}" method="POST" class="delete-form">
+                        <input type="hidden" name="username" th:value="${user.getUsername()}">
+                        <button type="submit" class="icon-btn" title="Delete account"
+                                onclick="return confirm('Remove this account?')">
+                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                    </form>
+                </div>
             </div>
-
-            <!-- Balance: positive -->
-            <div th:if="${account.getOpeningBalance().signum() > 0}"
-                 class="acct-balance positive"
-                 th:text="${'$' + #numbers.formatDecimal(account.getOpeningBalance(), 1, 2)}">$0.00</div>
-            <!-- Balance: negative -->
-            <div th:if="${account.getOpeningBalance().signum() < 0}"
-                 class="acct-balance negative"
-                 th:text="${'-$' + #numbers.formatDecimal(account.getOpeningBalance().abs(), 1, 2)}">$0.00</div>
-            <!-- Balance: zero -->
-            <div th:if="${account.getOpeningBalance().signum() == 0}"
-                 class="acct-balance zero">$0.00</div>
-
-            <!-- Delete button: POSTs to /account/delete/{id}?username=... -->
-            <div class="acct-actions">
-                <form th:action="@{/account/delete/{id}(id=${account.getId()})}" method="POST" class="delete-form">
-                    <input type="hidden" name="username" th:value="${user.getUsername()}">
-                    <button type="submit" class="icon-btn" title="Delete account"
-                            onclick="return confirm('Remove this account?')">
-                        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    </button>
-                </form>
-            </div>
-        </div>
+        </a>
     </div>
 
 </div>
+
+<!-- ========== CREATE ACCOUNT MODAL ========== -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal()">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <h2>New Account</h2>
+        <p class="modal-sub">Add a checking, savings, loan, or credit card</p>
+
+        <form th:action="@{/account/create}" method="POST" id="createAccountForm" novalidate>
+            <!-- Hidden: pass username so controller can re-fetch User -->
+            <input type="hidden" name="username" th:value="${user.getUsername()}">
+
+            <!-- Name -->
+            <div class="m-field" id="mf-name">
+                <label>Account Name</label>
+                <div class="m-input-wrap">
+                    <input type="text" name="name" id="acctName" placeholder="e.g. Chase Checking" autocomplete="off">
+                    <svg class="m-icon" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                </div>
+                <div class="m-field-error">Account name is required</div>
+            </div>
+
+            <!-- Balance with +/- toggle -->
+            <div class="m-field" id="mf-balance">
+                <label>Opening Balance</label>
+                <div class="balance-row">
+                    <div class="sign-toggle">
+                        <button type="button" class="sign-btn active" id="btnPos" onclick="setSign(true)">+</button>
+                        <button type="button" class="sign-btn" id="btnNeg" onclick="setSign(false)">−</button>
+                    </div>
+                    <div class="m-input-wrap">
+                        <input type="number" id="acctBalanceInput" placeholder="0.00" step="0.01" min="0" autocomplete="off">
+                        <svg class="m-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    </div>
+                </div>
+                <!-- Hidden input holds the actual signed value sent to the server -->
+                <input type="hidden" name="openingBalance" id="acctBalance">
+                <div class="m-field-error">Please enter a valid balance</div>
+            </div>
+
+            <button type="submit" class="modal-submit">Create Account</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let isPositive = true;
+
+    // Modal open/close
+    function openModal() {
+        document.getElementById('modalOverlay').classList.add('active');
+        document.getElementById('acctName').value = '';
+        document.getElementById('acctBalanceInput').value = '';
+        document.getElementById('acctBalance').value = '';
+        setSign(true);
+        clearModalErrors();
+    }
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('active');
+    }
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    // Sign toggle
+    function setSign(pos) {
+        isPositive = pos;
+        document.getElementById('btnPos').className = 'sign-btn' + (pos ? ' active' : '');
+        document.getElementById('btnNeg').className = 'sign-btn' + (!pos ? ' active neg' : '');
+    }
+
+    // Validation helpers
+    function showModalError(field) { document.getElementById('mf-' + field).classList.add('error'); }
+    function clearModalErrors() {
+        ['name', 'balance'].forEach(f => document.getElementById('mf-' + f).classList.remove('error'));
+    }
+
+    // Form submit: validate, set hidden balance, then POST
+    document.getElementById('createAccountForm').addEventListener('submit', function(e) {
+        clearModalErrors();
+        let valid = true;
+
+        const name = document.getElementById('acctName').value.trim();
+        const balRaw = document.getElementById('acctBalanceInput').value.trim();
+
+        if (!name) { showModalError('name'); valid = false; }
+        if (balRaw === '' || isNaN(Number(balRaw)) || Number(balRaw) < 0) { showModalError('balance'); valid = false; }
+
+        if (!valid) { e.preventDefault(); return; }
+
+        // Write the signed value into the hidden input so it gets POSTed
+        document.getElementById('acctBalance').value = isPositive ? balRaw : '-' + balRaw;
+    });
+</script>
 
 </body>
 </html>
