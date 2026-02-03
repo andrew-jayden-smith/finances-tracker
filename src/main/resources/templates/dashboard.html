@@ -406,16 +406,18 @@
                     <div class="acct-date" th:text="${'Opened ' + #temporals.format(account.getOpeningDate(), 'MMM d, yyyy')}">Opened Jan 1, 2025</div>
                 </div>
 
-                <!-- Balance positive -->
-                <div th:if="${account.getOpeningBalance().signum() > 0}"
+                <!-- Positive current balance -->
+                <div th:if="${accountBalances[account.id].signum() > 0}"
                      class="acct-balance positive"
-                     th:text="${'$' + #numbers.formatDecimal(account.getOpeningBalance(), 1, 2)}">$0.00</div>
-                <!-- Balance negative -->
-                <div th:if="${account.getOpeningBalance().signum() < 0}"
+                     th:text="${'$' + #numbers.formatDecimal(accountBalances[account.id], 1, 2)}">$0.00</div>
+
+                <!-- Negative current balance -->
+                <div th:if="${accountBalances[account.id].signum() < 0}"
                      class="acct-balance negative"
-                     th:text="${'-$' + #numbers.formatDecimal(account.getOpeningBalance().abs(), 1, 2)}">$0.00</div>
-                <!-- Balance zero -->
-                <div th:if="${account.getOpeningBalance().signum() == 0}"
+                     th:text="${'-$' + #numbers.formatDecimal(accountBalances[account.id].abs(), 1, 2)}">$0.00</div>
+
+                <!-- Zero balance -->
+                <div th:if="${accountBalances[account.id].signum() == 0}"
                      class="acct-balance zero">$0.00</div>
 
                 <!-- Delete -->
