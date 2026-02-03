@@ -3,8 +3,6 @@ package com.andrewsmith.financestracker.controller;
 import com.andrewsmith.financestracker.model.*;
 import com.andrewsmith.financestracker.repository.CategoryRepository;
 import com.andrewsmith.financestracker.repository.MerchantRepository;
-import com.andrewsmith.financestracker.service.CategoryService;
-import org.springframework.transaction.annotation.TransactionManagementConfigurationSelector;
 import org.springframework.ui.Model;
 import com.andrewsmith.financestracker.service.AccountService;
 import com.andrewsmith.financestracker.service.TransactionService;
@@ -14,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Controller
@@ -37,79 +35,115 @@ public class TransactionController {
 
     // View transactions for a specific amount
     @GetMapping("/account/{accountId}")
-    public String viewTransactions(@PathVariable Long accountId, @RequestParam String username, @RequestParam(required = false) String filter, @RequestParam(required = false) String filterValue, Model model) {
+    public String viewTransactions(
+            @PathVariable Long accountId,
+            @RequestParam String username,
+            @RequestParam(required = false) String filter,
+            @RequestParam(required = false) String filterValue,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            Model model) {
 
-        // Verify user
+        // 1️⃣ Verify user
         User user = userService.getUserByUsername(username).orElse(null);
-        if (user == null) {
-            model.addAttribute("error", "User not found");
-            return "redirect:/user/login";
-        }
+        if (user == null) return "redirect:/user/login";
 
-        // Get account and verify it belongs to user
+        // 2️⃣ Verify account
         Account account = accountService.getAccountById(accountId).orElse(null);
-        if (account == null || !account.getUser().equals(user)) {
-            model.addAttribute("error", "Account not found");
+        if (account == null || !account.getUser().equals(user))
             return "redirect:/account/dashboard?username=" + username;
-        }
 
-        // Get transaction based on filter or none
+        // 1️⃣ Determine default year/month
+        LocalDateTime now = LocalDateTime.now();
+        int filterYearValue = (year != null) ? year : now.getYear();
+        Integer filterMonthValueSafe = (month != null) ? month : now.getMonthValue(); // default to current month
+
         List<Transaction> transactions;
-        if ("type".equals(filter) && filterValue != null) {
-            // filter values by TransactionType Enum
-            try {
-                TransactionType type = TransactionType.valueOf(filterValue);
-                transactions = transactionService.getTransactionByAccountAndType(account, type);
-            } catch (IllegalArgumentException e) {
-                // If invalid filter, list all transactions
+
+        if ("date".equals(filter) && filterValue != null) {
+            if ("all".equals(filterValue)) {
+                // "All" selected → show all transactions for account
                 transactions = transactionService.getAllTransactionsByAccount(account);
+            } else if (month != null) {
+                LocalDateTime start = LocalDateTime.of(filterYearValue, month, 1, 0, 0);
+                LocalDateTime end = start.plusMonths(1).minusNanos(1);
+                transactions = transactionService.getTransactionByAccountAndDateDesc(account, start, end);
+            } else {
+                // Default: current month
+                LocalDateTime start = LocalDateTime.of(filterYearValue, filterMonthValueSafe, 1, 0, 0);
+                LocalDateTime end = start.plusMonths(1).minusNanos(1);
+                transactions = transactionService.getTransactionByAccountAndDateDesc(account, start, end);
             }
-        } else if ("date".equals(filter) && filterValue != null) {
-            LocalDateTime now = LocalDateTime.now();
-            LocalDateTime start;
-
-            switch (filterValue.toLowerCase()) {
-                case "day":
-                    start = now.minusDays(1);
-                    break;
-                case "week":
-                    start = now.minusWeeks(1);
-                    break;
-                case "month":
-                    start = now.minusMonths(1);
-                    break;
-                case "year":
-                    start = now.minusYears(1);
-                    break;
-                default:
-                    start = now.minusMonths(1); // default to month
+        }
+        else if ("category".equals(filter) && filterValue != null) {
+            Category category = categoryRepository.findCategoriesByName(filterValue);
+            if (category != null) {
+                if (month != null) {
+                    LocalDateTime start = LocalDateTime.of(filterYearValue, month, 1, 0, 0);
+                    LocalDateTime end = start.plusMonths(1).minusNanos(1);
+                    transactions = transactionService.getTransactionsByAccountAndCategoryAndDateDesc(account, category, start, end);
+                } else {
+                    // Default: current month
+                    LocalDateTime start = LocalDateTime.of(filterYearValue, filterMonthValueSafe, 1, 0, 0);
+                    LocalDateTime end = start.plusMonths(1).minusNanos(1);
+                    transactions = transactionService.getTransactionsByAccountAndCategoryAndDateDesc(account, category, start, end);
+                }
+            } else {
+                transactions = Collections.emptyList();
             }
-            transactions = transactionService.getTransactionByAccountAndDate(account, start, now);
-
-        } else {
-            // No filter, show all
-            transactions = transactionService.getAllTransactionsByAccount(account);
+        }
+        else if ("merchant".equals(filter) && filterValue != null) {
+            Merchant merchant = merchantRepository.findByName(filterValue);
+            if (merchant != null) {
+                if (month != null) {
+                    LocalDateTime start = LocalDateTime.of(filterYearValue, month, 1, 0, 0);
+                    LocalDateTime end = start.plusMonths(1).minusNanos(1);
+                    transactions = transactionService.getTransactionsByAccountAndMerchantAndDateDesc(account, merchant, start, end);
+                } else {
+                    // Default: current month
+                    LocalDateTime start = LocalDateTime.of(filterYearValue, filterMonthValueSafe, 1, 0, 0);
+                    LocalDateTime end = start.plusMonths(1).minusNanos(1);
+                    transactions = transactionService.getTransactionsByAccountAndMerchantAndDateDesc(account, merchant, start, end);
+                }
+            } else {
+                transactions = Collections.emptyList();
+            }
+        }
+        else {
+            // No filter → default to current month
+            LocalDateTime start = LocalDateTime.of(filterYearValue, filterMonthValueSafe, 1, 0, 0);
+            LocalDateTime end = start.plusMonths(1).minusNanos(1);
+            transactions = transactionService.getTransactionByAccountAndDateDesc(account, start, end);
         }
 
-        List<Transaction> allTransactions = transactionService.getAllTransactionsByAccount(account);
+
+        // 5️⃣ Calculate current balance
         BigDecimal currentBalance = account.getOpeningBalance();
-        // Loop through all transactions to get the current balance of the account
-        for (Transaction transaction : allTransactions) {
-            currentBalance = currentBalance.add(transaction.getAmount());
+        for (Transaction t : transactionService.getAllTransactionsByAccount(account)) {
+            currentBalance = currentBalance.add(t.getAmount());
         }
 
-        // Transaction template from model
+        // 6️⃣ Model attributes
         model.addAttribute("user", user);
         model.addAttribute("account", account);
         model.addAttribute("transactions", transactions);
         model.addAttribute("currentBalance", currentBalance);
         model.addAttribute("activeFilter", filter);
         model.addAttribute("filterValue", filterValue);
+        model.addAttribute("months", List.of(
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+        ));
+        model.addAttribute("years", List.of(2024, 2025, 2026)); // can generate dynamically
+        model.addAttribute("selectedYear", year);
+        model.addAttribute("selectedMonth", month);
         model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("merchants", merchantRepository.findAll());
 
         return "account-transaction";
     }
+
+
 
     @PostMapping("/create")
     public String createTransaction(@RequestParam Long accountId, @RequestParam String username, @RequestParam BigDecimal amount, @RequestParam(defaultValue = "") String description, @RequestParam String categoryName, @RequestParam String merchantName, Model model) {

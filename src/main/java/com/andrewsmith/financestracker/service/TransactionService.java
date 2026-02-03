@@ -1,8 +1,6 @@
 package com.andrewsmith.financestracker.service;
 
-import com.andrewsmith.financestracker.model.Account;
-import com.andrewsmith.financestracker.model.Transaction;
-import com.andrewsmith.financestracker.model.TransactionType;
+import com.andrewsmith.financestracker.model.*;
 import com.andrewsmith.financestracker.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
@@ -39,14 +37,46 @@ public class TransactionService {
     }
     // Filter to find transaction by date ranges
     public List<Transaction> getTransactionByAccountAndDate(Account account, LocalDateTime start, LocalDateTime end) {
-        return transactionRepository.findAllByAccountAndDateBetween(account, start, end);
+        return transactionRepository.findByAccountAndDateBetweenOrderByDateAsc(account, start, end);
     }
     // Filter to find transaction by account and type
     public List<Transaction> getTransactionByAccountAndType(Account account, TransactionType type) {
         return transactionRepository.findAllByAccountAndType(account, type);
     }
+
     // Filter to find transaction by date ranges
     public List<Transaction> getTransactionByAccountIdAndType(Long accountId, TransactionType type) {
         return transactionRepository.findAllByAccountIdAndType(accountId, type);
     }
+
+    public List<Transaction> getTransactionsByAccountAndCategory(Account account, Category category) {
+        return transactionRepository.findAllByAccountAndCategory(account, category);
+    }
+
+    public List<Transaction> getTransactionsByAccountAndMerchant(Account account, Merchant merchant) {
+        return transactionRepository.findAllByAccountAndMerchant(account, merchant);
+    }
+
+
+    public List<Transaction> getTransactionsByAccountAndCategoryAndDateAsc(Account account, Category category, LocalDateTime start, LocalDateTime end) {
+        return transactionRepository.findByAccountAndCategoryAndDateBetweenOrderByDateAsc(account, category, start, end);
+    }
+
+    public List<Transaction> getTransactionsByAccountAndMerchantAndDateAsc(Account account, Merchant merchant, LocalDateTime start, LocalDateTime end) {
+        return transactionRepository.findByAccountAndMerchantAndDateBetweenOrderByDateAsc(account, merchant, start, end);
+    }
+
+    public List<Transaction> getTransactionByAccountAndDateDesc(Account account, LocalDateTime start, LocalDateTime end) {
+        return transactionRepository.findByAccountAndDateBetweenOrderByDateDesc(account, start, end);
+    }
+
+    public List<Transaction> getTransactionsByAccountAndCategoryAndDateDesc(Account account, Category category, LocalDateTime start, LocalDateTime end) {
+        return transactionRepository.findByAccountAndCategoryAndDateBetweenOrderByDateDesc(account, category, start, end);
+    }
+
+    public List<Transaction> getTransactionsByAccountAndMerchantAndDateDesc(Account account, Merchant merchant, LocalDateTime start, LocalDateTime end) {
+        return transactionRepository.findByAccountAndMerchantAndDateBetweenOrderByDateDesc(account, merchant, start, end);
+    }
+
+
 }

@@ -204,6 +204,63 @@
             .transaction-row { grid-template-columns: 1fr; gap: 8px; }
             .transaction-row.header { display: none; }
         }
+
+
+        /* Dropdown container */
+        .filter-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Dropdown items, hidden by default */
+        .filter-dropdown-content {
+            position: absolute;
+            top: calc(100% + 4px); /* slightly below button */
+            left: 0;
+            background-color: var(--bg-card); /* matches your theme */
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            min-width: 140px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            padding: 4px 0;
+
+            /* Smooth transition */
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-4px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            z-index: 10;
+        }
+
+
+        /* Show dropdown on hover */
+        .filter-dropdown:hover .filter-dropdown-content {
+            display: block;       /* still needed for older browsers */
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+
+        /* Make dropdown links stack vertically and match filter-btn styling */
+        .filter-dropdown-content a {
+            display: block;
+            width: 100%;
+            padding: 8px 14px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+            border-radius: 0; /* reset border radius from filter-btn */
+        }
+
+        .filter-dropdown-content a:hover {
+            background: var(--green-dim);
+            color: var(--green-main);
+        }
+
+
+
     </style>
 </head>
 <body>
@@ -234,18 +291,63 @@
              th:text="${'-$' + #numbers.formatDecimal(currentBalance.abs(), 1, 2)}">$0.00</div>
     </div>
 
+
     <!-- Filter Bar -->
     <div class="filter-bar">
-        <button class="filter-btn" th:classappend="${activeFilter == null ? 'active' : ''}"
-                onclick="location.href='?username=[[${user.getUsername()}]]'">All</button>
-        <button class="filter-btn" th:classappend="${activeFilter == 'date' ? 'active' : ''}">Date</button>
-        <button class="filter-btn" th:classappend="${activeFilter == 'merchant' ? 'active' : ''}">Merchant</button>
-        <button class="filter-btn" th:classappend="${activeFilter == 'category' ? 'active' : ''}">Category</button>
+        <!-- All -->
+        <a class="filter-btn" th:classappend="${activeFilter == null ? 'active' : ''}"
+           th:href="@{/transaction/account/{id}(id=${account.id}, username=${user.username})}">All</a>
+
+        <!-- Date Dropdown -->
+        <div class="filter-dropdown">
+            <button class="filter-btn" th:classappend="${activeFilter == 'date' ? 'active' : ''}">Date</button>
+            <div class="filter-dropdown-content">
+
+                <!-- Month -->
+                <div th:each="month : ${1}">
+                    <a th:each="m, stat : ${months}"
+                       th:text="${m}"
+                       th:href="@{/transaction/account/{id}(id=${account.id}, username=${user.username}, filter='date', month=${stat.index + 1}, year=${selectedYear})}">
+                    </a>
+                </div>
+
+                <!-- Year -->
+                <div th:each="yr : ${years}">
+                    <a th:href="@{/transaction/account/{id}(id=${account.id}, username=${user.username}, filter='date', filterValue='all', year=${yr})}"
+                       th:text="${yr}">2026</a>
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- Merchant Dropdown -->
+        <div class="filter-dropdown">
+            <button class="filter-btn" th:classappend="${activeFilter == 'merchant' ? 'active' : ''}">Merchant</button>
+            <div class="filter-dropdown-content">
+                <a class="filter-btn" th:each="mer : ${merchants}"
+                   th:href="@{/transaction/account/{id}(id=${account.id}, username=${user.username}, filter='merchant', filterValue=${mer.name})}"
+                   th:text="${mer.name}"></a>
+            </div>
+        </div>
+
+        <!-- Category Dropdown -->
+        <div class="filter-dropdown">
+            <button class="filter-btn" th:classappend="${activeFilter == 'category' ? 'active' : ''}">Category</button>
+            <div class="filter-dropdown-content">
+                <a class="filter-btn" th:each="cat : ${categories}"
+                   th:href="@{/transaction/account/{id}(id=${account.id}, username=${user.username}, filter='category', filterValue=${cat.name})}"
+                   th:text="${cat.name}"></a>
+            </div>
+        </div>
+
+        <!-- Add Transaction -->
         <button class="add-transaction-btn" onclick="openModal()">
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Transaction
         </button>
     </div>
+
 
     <!-- Transaction Table -->
     <div class="transaction-table">
@@ -260,8 +362,8 @@
 
         <!-- Empty state -->
         <div th:if="${transactions.isEmpty()}" class="empty-state">
-            <h3>No transactions yet</h3>
-            <p>Add your first transaction to get started</p>
+            <h3>No transactions found</h3>
+            <p th:text="'No transactions for ' + (filterValue != null ? filterValue : 'this account') + (year != null ? ' ' + year : '')">Add your first transaction to get started</p>
         </div>
 
         <!-- Transaction rows -->
