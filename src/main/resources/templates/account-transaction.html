@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${account.getName() + ' - FinTrack'}">Account - FinTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0f0d;
+            --bg-card: #131a17;
+            --bg-input: #0f1613;
+            --green-main: #3ecf8e;
+            --green-dim: rgba(62, 207, 142, 0.15);
+            --green-glow: rgba(62, 207, 142, 0.35);
+            --text-primary: #eef2f0;
+            --text-muted: #7a8f85;
+            --border: rgba(62, 207, 142, 0.2);
+            --red: #e05a5a;
+            --red-dim: rgba(224, 90, 90, 0.15);
+            --blue: #5aafe8;
+            --amber: #e8a84c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .orb {
+            position: fixed; border-radius: 50%; filter: blur(100px); pointer-events: none; z-index: 0;
+        }
+        .orb-1 { width: 500px; height: 500px; background: #2aad72; opacity: 0.1; top: -200px; left: -150px; }
+        .orb-2 { width: 350px; height: 350px; background: #1e7a52; opacity: 0.12; bottom: -100px; right: -100px; }
+
+        .page-wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px; }
+
+        /* Topbar */
+        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .back-btn {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            color: var(--text-muted); border-radius: 10px; padding: 8px 14px;
+            font-size: 0.82rem; text-decoration: none; transition: border-color 0.2s, color 0.2s;
+        }
+        .back-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+        .back-btn:hover { border-color: var(--green-main); color: var(--green-main); }
+
+        .user-badge {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 7px 14px 7px 8px;
+        }
+        .avatar {
+            width: 30px; height: 30px; border-radius: 8px;
+            background: var(--green-dim); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 700; color: var(--green-main);
+        }
+        .user-name { font-size: 0.82rem; font-weight: 500; }
+
+        /* Account header */
+        .account-header {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 24px; margin-bottom: 24px;
+        }
+        .account-title { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
+        .account-balance { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 700; color: var(--green-main); }
+        .account-balance.negative { color: var(--red); }
+
+        /* Filter bar */
+        .filter-bar {
+            display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .filter-btn {
+            background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted);
+            border-radius: 10px; padding: 8px 16px; font-size: 0.82rem; cursor: pointer;
+            transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+        }
+        .filter-btn:hover { border-color: var(--green-main); color: var(--green-main); }
+        .filter-btn.active { background: var(--green-dim); border-color: var(--green-main); color: var(--green-main); }
+
+        .add-transaction-btn {
+            margin-left: auto;
+            display: flex; align-items: center; gap: 7px;
+            background: var(--green-dim); border: 1px solid var(--border); color: var(--green-main);
+            border-radius: 10px; padding: 8px 16px; font-size: 0.82rem; cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .add-transaction-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+        .add-transaction-btn:hover { background: var(--green-glow); box-shadow: 0 2px 14px var(--green-dim); }
+
+        /* Transaction table */
+        .transaction-table {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; overflow: hidden;
+        }
+        .transaction-row {
+            display: grid;
+            grid-template-columns: 120px 1fr 150px 120px 80px 50px;
+            align-items: center; gap: 16px; padding: 16px 20px;
+            border-bottom: 1px solid var(--border); transition: background 0.2s;
+        }
+        .transaction-row:last-child { border-bottom: none; }
+        .transaction-row:hover { background: rgba(62, 207, 142, 0.05); }
+        .transaction-row.header { background: var(--bg-input); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); font-weight: 600; }
+
+        .txn-date { font-size: 0.82rem; color: var(--text-muted); }
+        .txn-merchant { font-size: 0.9rem; font-weight: 500; }
+        .txn-category {
+            font-size: 0.78rem; padding: 4px 10px; background: var(--green-dim);
+            color: var(--green-main); border-radius: 6px; display: inline-block;
+        }
+        .txn-amount { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; text-align: right; }
+        .txn-amount.positive { color: var(--green-main); }
+        .txn-amount.negative { color: var(--red); }
+
+        .txn-delete {
+            width: 32px; height: 32px; border-radius: 8px;
+            border: 1px solid var(--border); background: transparent; color: var(--text-muted);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .txn-delete svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+        .txn-delete:hover { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+
+        .empty-state {
+            text-align: center; padding: 60px 20px;
+        }
+        .empty-state h3 { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
+        .empty-state p { color: var(--text-muted); font-size: 0.82rem; }
+
+        /* Modal styles (reuse from dashboard) */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+            z-index: 100; display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.25s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 32px 28px 28px; width: 90%; max-width: 450px;
+            transform: translateY(16px) scale(0.97);
+            transition: transform 0.3s cubic-bezier(.34,1.56,.64,1); position: relative;
+        }
+        .modal-overlay.active .modal { transform: translateY(0) scale(1); }
+        .modal-close {
+            position: absolute; top: 16px; right: 16px; width: 30px; height: 30px;
+            border-radius: 8px; border: 1px solid var(--border);
+            background: transparent; color: var(--text-muted); cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: border-color 0.2s, color 0.2s;
+        }
+        .modal-close:hover { border-color: var(--red); color: var(--red); }
+        .modal-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+        .modal h2 { font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
+        .modal .modal-sub { color: var(--text-muted); font-size: 0.82rem; margin-bottom: 24px; }
+
+        .m-field { margin-bottom: 16px; }
+        .m-field label {
+            display: block; font-size: 0.75rem; font-weight: 500; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 7px;
+        }
+        .m-input-wrap { position: relative; }
+        .m-input-wrap input, .m-input-wrap select {
+            width: 100%; padding: 12px 14px; background: var(--bg-input);
+            border: 1px solid var(--border); border-radius: 11px; color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .m-input-wrap input:focus, .m-input-wrap select:focus {
+            border-color: var(--green-main); box-shadow: 0 0 0 3px var(--green-dim);
+        }
+        .balance-row { display: flex; gap: 8px; }
+        .sign-toggle {
+            display: flex; border-radius: 11px; overflow: hidden;
+            border: 1px solid var(--border); flex-shrink: 0;
+        }
+        .sign-btn {
+            width: 38px; background: var(--bg-input); border: none; color: var(--text-muted);
+            font-size: 1.1rem; cursor: pointer; transition: background 0.2s, color 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .sign-btn.active { background: var(--green-dim); color: var(--green-main); }
+        .sign-btn.active.neg { background: var(--red-dim); color: var(--red); }
+        .balance-row .m-input-wrap { flex: 1; }
+
+        .modal-submit {
+            width: 100%; padding: 13px; margin-top: 6px; background: var(--green-main); color: #0a0f0d;
+            border: none; border-radius: 11px; font-family: 'Syne', sans-serif;
+            font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            transition: background 0.25s, box-shadow 0.25s, transform 0.15s;
+        }
+        .modal-submit:hover { background: #4fe8a0; box-shadow: 0 4px 20px var(--green-glow); }
+        .modal-submit:active { transform: scale(0.97); }
+
+        @media (max-width: 768px) {
+            .transaction-row { grid-template-columns: 1fr; gap: 8px; }
+            .transaction-row.header { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="page-wrap">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <a th:href="@{/account/dashboard(username=${user.getUsername()})}" class="back-btn">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Dashboard
+        </a>
+        <div class="user-badge">
+            <div class="avatar" th:text="${user.getUsername().substring(0,1).toUpperCase()}">U</div>
+            <div class="user-name" th:text="${user.getUsername()}">User</div>
+        </div>
+    </div>
+
+    <!-- Account Header -->
+    <div class="account-header">
+        <div class="account-title" th:text="${account.getName()}">Account Name</div>
+        <div th:if="${currentBalance.signum() >= 0}" class="account-balance"
+             th:text="${'$' + #numbers.formatDecimal(currentBalance, 1, 2)}">$0.00</div>
+        <div th:if="${currentBalance.signum() < 0}" class="account-balance negative"
+             th:text="${'-$' + #numbers.formatDecimal(currentBalance.abs(), 1, 2)}">$0.00</div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <button class="filter-btn" th:classappend="${activeFilter == null ? 'active' : ''}"
+                onclick="location.href='?username=[[${user.getUsername()}]]'">All</button>
+        <button class="filter-btn" th:classappend="${activeFilter == 'date' ? 'active' : ''}">Date</button>
+        <button class="filter-btn" th:classappend="${activeFilter == 'merchant' ? 'active' : ''}">Merchant</button>
+        <button class="filter-btn" th:classappend="${activeFilter == 'category' ? 'active' : ''}">Category</button>
+        <button class="add-transaction-btn" onclick="openModal()">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Transaction
+        </button>
+    </div>
+
+    <!-- Transaction Table -->
+    <div class="transaction-table">
+        <div class="transaction-row header">
+            <div>Date</div>
+            <div>Merchant</div>
+            <div>Category</div>
+            <div>Amount</div>
+            <div>Balance</div>
+            <div></div>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${transactions.isEmpty()}" class="empty-state">
+            <h3>No transactions yet</h3>
+            <p>Add your first transaction to get started</p>
+        </div>
+
+        <!-- Transaction rows -->
+        <div th:each="transaction : ${transactions}" class="transaction-row">
+            <div class="txn-date" th:text="${#temporals.format(transaction.getDate(), 'MMM d, yyyy')}">Jan 1, 2025</div>
+            <div class="txn-merchant" th:text="${transaction.getMerchant()}">Merchant Name</div>
+            <div class="txn-category" th:text="${transaction.getCategory()}">Category</div>
+            <div th:if="${transaction.getAmount().signum() > 0}" class="txn-amount positive"
+                 th:text="${'+$' + #numbers.formatDecimal(transaction.getAmount(), 1, 2)}">+$0.00</div>
+            <div th:if="${transaction.getAmount().signum() < 0}" class="txn-amount negative"
+                 th:text="${'-$' + #numbers.formatDecimal(transaction.getAmount().abs(), 1, 2)}">-$0.00</div>
+            <div class="txn-balance"><!--Running balance could be calculated here--></div>
+            <div>
+                <form th:action="@{/transaction/delete/{id}(id=${transaction.getId()})}" method="POST" style="margin:0;">
+                    <input type="hidden" name="accountId" th:value="${account.getId()}">
+                    <input type="hidden" name="username" th:value="${user.getUsername()}">
+                    <button type="submit" class="txn-delete" onclick="return confirm('Delete this transaction?')">
+                        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ========== NEW TRANSACTION MODAL ========== -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal()">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <h2>New Transaction</h2>
+        <p class="modal-sub">Add a purchase, deposit, or payment</p>
+
+        <form th:action="@{/transaction/create}" method="POST" id="transactionForm">
+            <input type="hidden" name="accountId" th:value="${account.getId()}">
+            <input type="hidden" name="username" th:value="${user.getUsername()}">
+
+            <!-- Merchant -->
+            <div class="m-field">
+                <label>Merchant</label>
+                <div class="m-input-wrap">
+                    <input type="text" name="merchant" id="merchant" placeholder="e.g. Amazon, Starbucks" required>
+                </div>
+            </div>
+
+            <!-- Category -->
+            <div class="m-field">
+                <label>Category</label>
+                <div class="m-input-wrap">
+                    <select name="category" required>
+                        <option value="">Select category</option>
+                        <option value="Housing">Housing</option>
+                        <option value="House Insurance">House Insurance</option>
+                        <option value="Property Tax">Property Tax</option>
+                        <option value="Car Payment(s)">Car Payments(s)</option>
+                        <option value="Drivers Insurance">Drivers Insurance</option>
+                        <option value="Groceries">Groceries</option>
+                        <option value="Electric">Electric</option>
+                        <option value="Gas Heat">Gas Heat</option>
+                        <option value="Water">Water</option>
+                        <option value="Sewer">Sewer</option>
+                        <option value="Trash">Trash</option>
+                        <option value="Internet">Internet</option>
+                        <option value="Fuel">Fuel</option>
+                        <option value="Phone(s)">Phone(s)</option>
+                        <option value="Student Loans">Student Loans</option>
+                        <option value="Medical">Medical</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Fast Food & Dining">Fast Food & Dining</option>
+                        <option value="Gifts">Gifts</option>
+                        <option value="Home Repair">Home Repair</option>
+                        <option value="Car Repair">Car Repair</option>
+                        <option value="Income">Income</option>
+                        <option value="Transfer">Transfer</option>
+                        <option value="Other">Other</option>
+                        <option value="Wants">Wants</option>
+                        <option value="Retirement">Retirement</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Amount with +/- toggle -->
+            <div class="m-field">
+                <label>Amount</label>
+                <div class="balance-row">
+                    <div class="sign-toggle">
+                        <button type="button" class="sign-btn" id="btnPos" onclick="setSign(true)">+</button>
+                        <button type="button" class="sign-btn active neg" id="btnNeg" onclick="setSign(false)">−</button>
+                    </div>
+                    <div class="m-input-wrap">
+                        <input type="number" id="amountInput" placeholder="0.00" step="0.01" min="0" required>
+                    </div>
+                </div>
+                <input type="hidden" name="amount" id="amount">
+            </div>
+
+            <button type="submit" class="modal-submit">Add Transaction</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let isPositive = false; // Default to negative (expense)
+
+    function openModal() {
+        document.getElementById('modalOverlay').classList.add('active');
+        document.getElementById('merchant').value = '';
+        document.getElementById('amountInput').value = '';
+        setSign(false);
+    }
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('active');
+    }
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    function setSign(pos) {
+        isPositive = pos;
+        document.getElementById('btnPos').className = 'sign-btn' + (pos ? ' active' : '');
+        document.getElementById('btnNeg').className = 'sign-btn' + (!pos ? ' active neg' : '');
+    }
+
+    document.getElementById('transactionForm').addEventListener('submit', function(e) {
+        const amountRaw = document.getElementById('amountInput').value.trim();
+        if (amountRaw === '' || isNaN(Number(amountRaw)) || Number(amountRaw) < 0) {
+            e.preventDefault();
+            return;
+        }
+        document.getElementById('amount').value = isPositive ? amountRaw : '-' + amountRaw;
+    });
+</script>
+
+</body>
+</html>

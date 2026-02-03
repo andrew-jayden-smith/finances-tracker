@@ -5,22 +5,21 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "userTransactions")
+@Table(name = "user_transactions")
 public class Transaction {
 
-    // Database id
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    private User user;
-
-    // Owner
-    @ManyToOne
+    @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
-    // Transaction Data
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
     private BigDecimal amount;
 
     @Column(nullable = false)
@@ -28,19 +27,22 @@ public class Transaction {
 
     @Enumerated(EnumType.STRING)
     private TransactionType type;
+
     private String description;
 
     @ManyToOne
+    @JoinColumn(name = "category_id")
     private Category category;
 
     @ManyToOne
+    @JoinColumn(name = "merchant_id")
     private Merchant merchant;
 
     public Transaction() {}
 
-    // Constructor to create a new transaction
-    public Transaction(Account account, BigDecimal amount, TransactionType type, String description, LocalDateTime date, Category category, Merchant merchant) {
-        this.account = account;
+    public Transaction(BigDecimal amount, TransactionType type,
+                       String description, Category category, Merchant merchant) {
+
         this.amount = amount;
         this.type = type;
         this.description = description;
@@ -49,9 +51,9 @@ public class Transaction {
         this.merchant = merchant;
     }
 
-    // Constructor for Database
-    public Transaction (Long id, Account account, BigDecimal amount, TransactionType type, String description, Category category, Merchant merchant) {
-        this.account = account;
+    public Transaction(Long id, BigDecimal amount, TransactionType type,
+                       String description, Category category, Merchant merchant) {
+
         this.id = id;
         this.amount = amount;
         this.type = type;
@@ -60,6 +62,16 @@ public class Transaction {
         this.category = category;
         this.merchant = merchant;
     }
+
+    // Setters needed for Hibernate
+    public void setUser(User user) { this.user = user; }
+    public void setAccount(Account account) { this.account = account; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
+    public void setDate(LocalDateTime date) { this.date = date; }
+    public void setType(TransactionType type) { this.type = type; }
+    public void setDescription(String description) { this.description = description; }
+    public void setCategory(Category category) { this.category = category; }
+    public void setMerchant(Merchant merchant) { this.merchant = merchant; }
 
     // Methods for getters and setters
     public Long getId() {
