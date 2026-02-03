@@ -49,7 +49,7 @@ public class AccountController {
         return "dashboard";
     }
 
-    // Create new accounts button(opens a pop up) and delete current
+    // Create new accounts button(opens a pop up) and delete
     @GetMapping("/create")
     public String showCreateAccountForm(@RequestParam String username, Model model) {
         User user = userService.getUserByUsername(username).orElseThrow(null);
@@ -72,7 +72,6 @@ public class AccountController {
         }
         account.setUser(user);
         account.setOpeningDate(LocalDateTime.now());
-        // account.setOpeningBalance(BigDecimal.ZERO);
         accountService.createAccount(account);
         return "redirect:/account/dashboard?username=" + username;
     }

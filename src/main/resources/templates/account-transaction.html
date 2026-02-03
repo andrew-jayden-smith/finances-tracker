@@ -113,6 +113,7 @@
 
         .txn-date { font-size: 0.82rem; color: var(--text-muted); }
         .txn-merchant { font-size: 0.9rem; font-weight: 500; }
+        .txn-description { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
         .txn-category {
             font-size: 0.78rem; padding: 4px 10px; background: var(--green-dim);
             color: var(--green-main); border-radius: 6px; display: inline-block;
@@ -136,7 +137,7 @@
         .empty-state h3 { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
         .empty-state p { color: var(--text-muted); font-size: 0.82rem; }
 
-        /* Modal styles (reuse from dashboard) */
+        /* Modal styles */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
             z-index: 100; display: flex; align-items: center; justify-content: center;
@@ -250,7 +251,7 @@
     <div class="transaction-table">
         <div class="transaction-row header">
             <div>Date</div>
-            <div>Merchant</div>
+            <div>Merchant / Description</div>
             <div>Category</div>
             <div>Amount</div>
             <div>Balance</div>
@@ -266,9 +267,12 @@
         <!-- Transaction rows -->
         <div th:each="transaction : ${transactions}" class="transaction-row">
             <div class="txn-date" th:text="${#temporals.format(transaction.getDate(), 'MMM d, yyyy')}">Jan 1, 2025</div>
-            <div class="txn-merchant" th:text="${transaction.getMerchant()}">Merchant Name</div>
-            <div class="txn-category" th:text="${transaction.getCategory()}">Category</div>
-            <div th:if="${transaction.getAmount().signum() > 0}" class="txn-amount positive"
+            <div>
+                <div class="txn-merchant" th:text="${transaction.getMerchant() != null ? transaction.getMerchant().getName() : 'Unknown'}">Merchant Name</div>
+                <div th:if="${transaction.getDescription() != null and !transaction.getDescription().isEmpty()}" class="txn-description" th:text="${transaction.getDescription()}"></div>
+            </div>
+            <div class="txn-category" th:text="${transaction.getCategory() != null ? transaction.getCategory().getName() : 'None'}">Category</div>
+            <div th:if="${transaction.getAmount().signum() >= 0}" class="txn-amount positive"
                  th:text="${'+$' + #numbers.formatDecimal(transaction.getAmount(), 1, 2)}">+$0.00</div>
             <div th:if="${transaction.getAmount().signum() < 0}" class="txn-amount negative"
                  th:text="${'-$' + #numbers.formatDecimal(transaction.getAmount().abs(), 1, 2)}">-$0.00</div>
@@ -304,7 +308,15 @@
             <div class="m-field">
                 <label>Merchant</label>
                 <div class="m-input-wrap">
-                    <input type="text" name="merchant" id="merchant" placeholder="e.g. Amazon, Starbucks" required>
+                    <input type="text" name="merchantName" id="merchant" placeholder="e.g. Amazon, Starbucks" required>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="m-field">
+                <label>Description</label>
+                <div class="m-input-wrap">
+                    <input type="text" name="description" id="description" placeholder="e.g. Weekly groceries, gas fillup">
                 </div>
             </div>
 
@@ -312,7 +324,7 @@
             <div class="m-field">
                 <label>Category</label>
                 <div class="m-input-wrap">
-                    <select name="category" required>
+                    <select name="categoryName" required>
                         <option value="">Select category</option>
                         <option value="Housing">Housing</option>
                         <option value="House Insurance">House Insurance</option>
@@ -332,7 +344,7 @@
                         <option value="Medical">Medical</option>
                         <option value="Shopping">Shopping</option>
                         <option value="Entertainment">Entertainment</option>
-                        <option value="Fast Food & Dining">Fast Food & Dining</option>
+                        <option value="Fast Food & Dining">Fast Food &amp; Dining</option>
                         <option value="Gifts">Gifts</option>
                         <option value="Home Repair">Home Repair</option>
                         <option value="Car Repair">Car Repair</option>
@@ -371,6 +383,7 @@
     function openModal() {
         document.getElementById('modalOverlay').classList.add('active');
         document.getElementById('merchant').value = '';
+        document.getElementById('description').value = '';
         document.getElementById('amountInput').value = '';
         setSign(false);
     }

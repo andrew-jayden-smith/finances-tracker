@@ -112,7 +112,7 @@ public class TransactionController {
     }
 
     @PostMapping("/create")
-    public String createTransaction(@RequestParam Long accountId, @RequestParam String username, @RequestParam BigDecimal amount, @RequestParam String description, @RequestParam String categoryName, @RequestParam String merchantName, Model model) {
+    public String createTransaction(@RequestParam Long accountId, @RequestParam String username, @RequestParam BigDecimal amount, @RequestParam(defaultValue = "") String description, @RequestParam String categoryName, @RequestParam String merchantName, Model model) {
         // If user is not there or null
         User user = userService.getUserByUsername(username).orElse(null);
         if (user == null) {
@@ -147,8 +147,8 @@ public class TransactionController {
         }
 
         // Build and Save new Transaction
-        Transaction transaction = new Transaction(amount, type, description, category, merchant);
-
+        Transaction transaction = new Transaction(user, account, amount, type, description, category, merchant);
+        transaction.setAccount(account);
         transactionService.createTransaction(transaction);
 
         return "redirect:/transaction/account/" + accountId + "?username=" + username;
