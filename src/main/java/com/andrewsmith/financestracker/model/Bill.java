@@ -12,7 +12,7 @@ public class Bill {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false, updatable = false)
     private User user;
 
     private String name; // Electric, Gas, Internet
@@ -45,14 +45,12 @@ public class Bill {
         this.billingMonth = billingMonth;
         this.billingYear = billingYear;
         this.status = BillStatus.DUE;
+        this.frequency = null;
     }
 
     // Getters and Setters
     public Long getId() {
         return id;
-    }
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public User getUser() {

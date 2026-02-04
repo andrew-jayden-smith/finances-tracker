@@ -34,10 +34,6 @@ public class BillPayment {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public Bill getBill() {
         return bill;
     }
