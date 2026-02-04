@@ -9,7 +9,7 @@ public class Merchant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50, unique = true)
     private String name;
 
     // Mapper
@@ -20,12 +20,6 @@ public class Merchant {
         this.name = name;
     }
 
-    // Load existing from db
-    public Merchant(Long id, String name) {
-        this.id = id;
-        this.name = name;
-    }
-
     // Getters and Setters
     public long getId() {
         return id;
@@ -33,10 +27,6 @@ public class Merchant {
 
     public String getName() {
         return name;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public void setName(String name) {
