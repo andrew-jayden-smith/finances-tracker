@@ -1,5 +1,5 @@
 package com.andrewsmith.financestracker.model;
 
 public enum BillFrequency {
-    MONTHLY, ANNUAL, QUARTERLY, BI_MONTHLY, BI_ANNUAL
+    MONTHLY, ANNUAL, BI_ANNUAL, BI_WEEKLY
 }

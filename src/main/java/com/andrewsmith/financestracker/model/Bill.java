@@ -29,6 +29,10 @@ public class Bill {
     private int billingMonth; // 1-12
     private int billingYear; // 2026 - Other bills that do not occur monthly
 
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
+
     // JPA
     public Bill() {}
 
@@ -40,21 +44,27 @@ public class Bill {
         this.dueDay = dueDay;
         this.billingMonth = billingMonth;
         this.billingYear = billingYear;
+        this.status = BillStatus.DUE;
     }
 
     // Getters and Setters
     public Long getId() {
         return id;
     }
-
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public String getName() {
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
     }
@@ -62,15 +72,27 @@ public class Bill {
     public BigDecimal getAmount() {
         return amount;
     }
-
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public BillStatus getStatus() {
+        return status;
+    }
+    public void setStatus(BillStatus status) {
+        this.status = status;
+    }
+
+    public BillFrequency getFrequency() {
+        return frequency;
+    }
+    public void setFrequency(BillFrequency frequency) {
+        this.frequency = frequency;
     }
 
     public int getDueDay() {
         return dueDay;
     }
-
     public void setDueDay(int dueDay) {
         this.dueDay = dueDay;
     }
@@ -78,7 +100,6 @@ public class Bill {
     public int getBillingMonth() {
         return billingMonth;
     }
-
     public void setBillingMonth(int billingMonth) {
         this.billingMonth = billingMonth;
     }
@@ -86,8 +107,14 @@ public class Bill {
     public int getBillingYear() {
         return billingYear;
     }
-
     public void setBillingYear(int billingYear) {
         this.billingYear = billingYear;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+    public void setCategory(Category category) {
+        this.category = category;
     }
 }
