@@ -10,22 +10,22 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 50)
     private String username;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String passwordHash;
 
     @Column(nullable = false)
     private LocalDateTime date;
 
     @Column(nullable = false)
-    private boolean enabled;
+    private boolean enabled = true;
 
-    // Spring constructor
+    // Spring JPA constructor
     public User() {}
 
     // New user registration Constructor
@@ -33,28 +33,12 @@ public class User {
         this.username = username;
         this.email = email;
         this.passwordHash = passwordHash;
-        this.date = LocalDateTime.now();
-        this.enabled = true;
     }
 
     // Initialize the date and time and enable account
     @PrePersist
     protected void onCreate() {
-        if (date == null) {
-            date = LocalDateTime.now();
-        }
-        enabled = true;
-    }
-
-
-    // Database Constructor
-    public User(Long id, String username, String email, String passwordHash, LocalDateTime date, boolean enabled) {
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.passwordHash = passwordHash;
-        this.date = date;
-        this.enabled = enabled;
+        this.date = LocalDateTime.now();
     }
 
     // Getters and Setters
@@ -62,14 +46,9 @@ public class User {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getUsername() {
         return username;
     }
-
     public void setUsername(String username) {
         this.username = username;
     }
@@ -77,7 +56,6 @@ public class User {
     public String getEmail() {
         return email;
     }
-
     public void setEmail(String email) {
         this.email = email;
     }
@@ -85,24 +63,15 @@ public class User {
     public String getPasswordHash() {
         return passwordHash;
     }
-
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
     }
 
-    public LocalDateTime getDate() {
+    public LocalDateTime getCreatedAt() {
         return date;
-    }
-
-    public void setDate(LocalDateTime date) {
-        this.date = date;
     }
 
     public boolean isEnabled() {
         return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 }
