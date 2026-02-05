@@ -1,22 +1,97 @@
 package com.andrewsmith.financestracker.controller;
 
+import ch.qos.logback.core.model.Model;
+import com.andrewsmith.financestracker.model.Account;
+import com.andrewsmith.financestracker.model.Bill;
+import com.andrewsmith.financestracker.model.User;
+import com.andrewsmith.financestracker.repository.MerchantRepository;
+import com.andrewsmith.financestracker.service.AccountService;
+import com.andrewsmith.financestracker.service.BillService;
+import com.andrewsmith.financestracker.service.CategoryService;
+import com.andrewsmith.financestracker.service.UserService;
 import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Repository;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/bills")
 public class BillController {
 
     // Call and Inject all services and repos needed
+    private final BillService billService;
+    private final UserService userService;
+    private final CategoryService categoryService;
+    private final AccountService accountService;
+    private final MerchantRepository merchantRepository;
+
+    public BillController(BillService billService, UserService userService, CategoryService categoryService, AccountService accountService, MerchantRepository merchantRepository) {
+        this.billService = billService;
+        this.userService = userService;
+        this.categoryService = categoryService;
+        this.accountService = accountService;
+        this.merchantRepository = merchantRepository;
+    }
 
     // Schedule view for calendar
     // Get mapping for route and view method with request parameters and constructors
-    // set user null cases
-    // set current month for default or no selection, today, month, year
-    // List bills for the month
-    // Map bills by week and Map bills by stats
-    // Map payment status paidStatus, loop through the bills {boolean isPaid} to check the status of all bills
-    // Check for overdue bills, if its over the target month
+    @GetMapping("/schedule")
+    public String viewSchedule(@RequestParam String username, @RequestParam(required = false) Integer month, @RequestParam(required = false) Integer year, Model model) {
+        // Verify user
+        User user = userService.getUserByUsername(username).orElse(null);
+        if (user == null) {
+            return "redirect:/user/login";
+        }
+
+        // set current month for default or no selection, today, month, year
+        LocalDate today = LocalDate.now();
+
+        int specificMonth;
+        if (month != null) {
+            specificMonth = month;
+        } else {
+            specificMonth = today.getMonthValue();
+        }
+        //int specificMonth = month != null ? month : today.getMonthValue();
+
+        int specificYear;
+        if (year != null) {
+            specificYear = year;
+        } else {
+            specificYear = today.getYear();
+        }
+        //int specificYear = year != null ? year : today.getYear();
+
+        // List bills for the month
+        List<Bill> bills = billService.getBillsForMonth(user, specificMonth, specificYear);
+
+        // Map bills due by week (Weeks are key and List of Bills is value)
+        Map<Integer, List<Bill>> billsByWeek = billService.groupBillsByWeek(bills); // Week 1, [Electric, Water] and Week 2, [Gas]
+
+        // Map bills by stats with String(name) and Object(int, double, can store any)
+        Map<String, Object> stats = billService.getMonthlyStats(user, specificMonth, specificYear);
+
+        // Map payment status(key: billId, value is true/false)
+        Map<Long, Boolean> paidStatus = new HashMap<>();
+        // Check for overdue bills, if its over the target month
+        for (Bill bill : bills) {
+            boolean isPaid = billService.isBillPaidForMonth(bill.getId(), specificMonth, specificYear);
+            paidStatus.put(bill.getId(), isPaid);
+        }
+
+        // Month navigation
+
+
+
+        return "bills/schedule";
+    }
+
     // Month navigation
     // model.addAttribute for all variables
     // return bills-schedule view
