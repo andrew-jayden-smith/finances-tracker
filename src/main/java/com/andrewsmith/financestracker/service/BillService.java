@@ -88,7 +88,7 @@ public class BillService {
         return billPaymentRepository.findByBillOrderByPaidDateDesc(bill);
     }
 
-    // Stats on Dashbaord
+    // Stats on Dashboard
     public Map<String, Object> getMonthlyStats(User user, int month, int year) {
         List<Bill> bills = getBillsForMonth(user, month, year);
 
@@ -152,6 +152,8 @@ public class BillService {
             newBill.setStatus(BillStatus.DUE);
             newBill.setFrequency(BillFrequency.MONTHLY);
             billRepository.save(newBill);
+
+            // createBill(newBill); creates and sets it due but does not set frequency
             }
         }
     }
