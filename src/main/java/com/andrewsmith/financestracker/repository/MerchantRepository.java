@@ -11,6 +11,6 @@ import java.util.List;
 @Repository
 public interface MerchantRepository extends CrudRepository<Merchant, Long>, JpaSpecificationExecutor<Merchant> {
     Merchant findByName(String name);
-    boolean existsByName(String name);
-    List<Merchant> findByNameContainingIgnoreCase(String name);
+    // boolean existsByName(String name);
+    // List<Merchant> findByNameContainingIgnoreCase(String name);
 }

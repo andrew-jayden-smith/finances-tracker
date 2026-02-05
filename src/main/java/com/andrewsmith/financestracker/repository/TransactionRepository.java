@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface TransactionRepository extends CrudRepository<Transaction, Long>, JpaSpecificationExecutor<Transaction> {
-    List<Transaction> findAllByAccountAndDateBetween(Account account, LocalDateTime start, LocalDateTime end);
+    //List<Transaction> findAllByAccountAndDateBetween(Account account, LocalDateTime start, LocalDateTime end);
     List<Transaction> findAllByAccountAndType(Account account, TransactionType type);
     List<Transaction> findAllByAccountIdAndType(Long accountId, TransactionType type);
     List<Transaction> findAllByAccount(Account account);
