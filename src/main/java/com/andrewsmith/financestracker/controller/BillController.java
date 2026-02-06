@@ -118,15 +118,11 @@ public class BillController {
         model.addAttribute("categories", categoryRepository.findAll());
 
         return "bills-schedule";
-    }
-
-    // Month navigation
-    // model.addAttribute for all variables
-    // return bills-schedule view
+    }//1'1
 
     // Post mapping for create bill
     // if user is null case
-    // Call new bill, set status, set frquency
+    // Call new bill, set status, set frequency
     // Link category if its provided "should be"
     // return the link of "redirect:/bills/schedule?username=" + username + "&month=" + billingMonth + "&year=" + billingYear;
 

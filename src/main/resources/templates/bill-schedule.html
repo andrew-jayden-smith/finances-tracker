@@ -1,10 +1,901 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bills Schedule - FinTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0f0d;
+            --bg-card: #131a17;
+            --bg-input: #0f1613;
+            --green-main: #3ecf8e;
+            --green-dim: rgba(62, 207, 142, 0.15);
+            --green-glow: rgba(62, 207, 142, 0.35);
+            --text-primary: #eef2f0;
+            --text-muted: #7a8f85;
+            --border: rgba(62, 207, 142, 0.2);
+            --red: #e05a5a;
+            --red-dim: rgba(224, 90, 90, 0.15);
+            --blue: #5aafe8;
+            --amber: #e8a84c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .orb {
+            position: fixed; border-radius: 50%; filter: blur(100px); pointer-events: none; z-index: 0;
+        }
+        .orb-1 { width: 500px; height: 500px; background: #2aad72; opacity: 0.1; top: -200px; left: -150px; }
+        .orb-2 { width: 350px; height: 350px; background: #1e7a52; opacity: 0.12; bottom: -100px; right: -100px; }
+
+        .page-wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px; }
+
+        /* Topbar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+        }
+        .back-btn {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            color: var(--text-muted); border-radius: 10px; padding: 8px 14px;
+            font-size: 0.82rem; text-decoration: none; transition: all 0.2s;
+        }
+        .back-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+        .back-btn:hover { border-color: var(--green-main); color: var(--green-main); }
+
+        .add-bill-btn {
+            display: flex; align-items: center; gap: 7px;
+            background: var(--green-main);
+            border: none;
+            color: #0a0f0d;
+            border-radius: 11px; padding: 11px 20px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .add-bill-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+        .add-bill-btn:hover {
+            background: #4fe8a0;
+            box-shadow: 0 4px 20px var(--green-glow);
+            transform: translateY(-2px);
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 28px;
+        }
+        .page-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .page-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Calendar Header */
+        .calendar-header {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .month-nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .month-btn {
+            width: 36px; height: 36px;
+            border-radius: 9px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .month-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+        .month-btn:hover { border-color: var(--green-main); color: var(--green-main); }
+
+        .current-month-display {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .calendar-stats {
+            display: flex;
+            gap: 24px;
+        }
+        .stat-item {
+            text-align: right;
+        }
+        .stat-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+        }
+        .stat-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        /* View Toggle */
+        .view-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .view-btn {
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            border-radius: 9px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .view-btn.active {
+            background: var(--green-dim);
+            border-color: var(--green-main);
+            color: var(--green-main);
+        }
+        .view-btn:hover { border-color: var(--green-main); }
+
+        /* Timeline (Weekly View) */
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .timeline-week {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 20px;
+        }
+
+        .week-header {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .bill-row {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .bill-row:last-child { margin-bottom: 0; }
+        .bill-row:hover {
+            border-color: rgba(62, 207, 142, 0.4);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+        }
+        .bill-row.paid {
+            opacity: 0.6;
+            border-color: var(--green-main);
+        }
+        .bill-row.overdue {
+            border-color: var(--red);
+            background: var(--red-dim);
+        }
+
+        .bill-date {
+            width: 52px;
+            height: 52px;
+            border-radius: 11px;
+            background: var(--green-dim);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .date-day {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--green-main);
+            line-height: 1;
+        }
+        .date-month {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .bill-row.overdue .bill-date {
+            background: var(--red-dim);
+            border-color: var(--red);
+        }
+        .bill-row.overdue .date-day {
+            color: var(--red);
+        }
+
+        .bill-details { flex: 1; min-width: 0; }
+        .bill-details-name {
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .bill-details-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+        .bill-category {
+            background: var(--green-dim);
+            color: var(--green-main);
+            padding: 3px 9px;
+            border-radius: 5px;
+            font-size: 0.72rem;
+            font-weight: 500;
+        }
+        .bill-frequency {
+            text-transform: capitalize;
+        }
+
+        .bill-amount-display {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .bill-actions-row {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .action-icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .action-icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+        .action-icon-btn:hover { border-color: var(--green-main); color: var(--green-main); }
+        .action-icon-btn.delete:hover { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+
+        .paid-checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .paid-checkbox svg {
+            width: 13px;
+            height: 13px;
+            stroke: #0a0f0d;
+            fill: none;
+            stroke-width: 3;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .bill-row.paid .paid-checkbox {
+            background: var(--green-main);
+            border-color: var(--green-main);
+        }
+        .bill-row.paid .paid-checkbox svg { opacity: 1; }
+
+        /* Empty State */
+        .empty-state {
+            background: var(--bg-card);
+            border: 1px dashed var(--border);
+            border-radius: 16px;
+            padding: 60px 20px;
+            text-align: center;
+        }
+        .empty-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            background: var(--green-dim);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .empty-icon svg { width: 32px; height: 32px; stroke: var(--green-main); fill: none; stroke-width: 2; }
+        .empty-state h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .empty-state p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px 28px 28px;
+            width: 90%;
+            max-width: 500px;
+            transform: translateY(16px) scale(0.97);
+            transition: transform 0.3s cubic-bezier(.34, 1.56, .64, 1);
+            position: relative;
+        }
+        .modal-overlay.active .modal { transform: translateY(0) scale(1); }
+
+        .modal-close {
+            position: absolute; top: 16px; right: 16px;
+            width: 30px; height: 30px;
+            border-radius: 8px; border: 1px solid var(--border);
+            background: transparent; color: var(--text-muted);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .modal-close:hover { border-color: var(--red); color: var(--red); }
+        .modal-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+
+        .modal h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .modal .modal-sub {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 24px;
+        }
+
+        .m-field { margin-bottom: 16px; }
+        .m-field label {
+            display: block; font-size: 0.75rem; font-weight: 500;
+            color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 0.8px; margin-bottom: 7px;
+        }
+        .m-input-wrap input, .m-input-wrap select {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .m-input-wrap input::placeholder { color: var(--text-muted); opacity: 0.6; }
+        .m-input-wrap input:focus, .m-input-wrap select:focus {
+            border-color: var(--green-main);
+            box-shadow: 0 0 0 3px var(--green-dim);
+        }
+
+        .date-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 12px;
+        }
+
+        .modal-submit {
+            width: 100%; padding: 13px; margin-top: 8px;
+            background: var(--green-main); color: #0a0f0d;
+            border: none; border-radius: 11px;
+            font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .modal-submit:hover {
+            background: #4fe8a0;
+            box-shadow: 0 4px 20px var(--green-glow);
+        }
+
+        @media (max-width: 768px) {
+            .calendar-header {
+                flex-direction: column;
+                gap: 20px;
+            }
+            .calendar-stats {
+                width: 100%;
+                justify-content: space-around;
+            }
+            .bill-row {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
 </head>
 <body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="page-wrap">
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <a th:href="@{/account/dashboard(username=${user.getUsername()})}" class="back-btn">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Dashboard
+        </a>
+        <button class="add-bill-btn" onclick="openModal()">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Bill
+        </button>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-title">Bills Schedule</div>
+        <div class="page-subtitle">Track and manage your recurring bills and payments</div>
+    </div>
+
+    <!-- Calendar Header -->
+    <div class="calendar-header">
+        <div class="month-nav">
+            <a th:href="@{/bills/schedule(username=${user.getUsername()}, month=${prevMonth}, year=${prevYear})}"
+               class="month-btn">
+                <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            </a>
+            <div class="current-month-display" th:text="${currentMonth + ' ' + currentYear}">February 2026</div>
+            <a th:href="@{/bills/schedule(username=${user.getUsername()}, month=${nextMonth}, year=${nextYear})}"
+               class="month-btn">
+                <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </a>
+        </div>
+
+        <div class="calendar-stats">
+            <div class="stat-item">
+                <div class="stat-label">Total Due</div>
+                <div class="stat-value" style="color: var(--red);"
+                     th:text="${'$' + #numbers.formatDecimal(stats.get('totalDue'), 1, 2)}">$0.00</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Remaining</div>
+                <div class="stat-value" style="color: var(--amber);"
+                     th:text="${'$' + #numbers.formatDecimal(stats.get('remaining'), 1, 2)}">$0.00</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Paid</div>
+                <div class="stat-value" style="color: var(--green-main);"
+                     th:text="${'$' + #numbers.formatDecimal(stats.get('totalPaid'), 1, 2)}">$0.00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Toggle (future: weekly vs monthly calendar view) -->
+    <div class="view-toggle">
+        <button class="view-btn active">Weekly Timeline</button>
+        <button class="view-btn" disabled style="opacity: 0.5;">Monthly Calendar (Coming Soon)</button>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline">
+
+        <div th:if="${bills.isEmpty()}" class="empty-state">
+            <div class="empty-icon">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <h3>No bills scheduled</h3>
+            <p>Click "Add Bill" to start tracking your recurring payments</p>
+        </div>
+
+        <!-- Week 1 -->
+        <div th:if="${billsByWeek.containsKey(1)}" class="timeline-week">
+            <div class="week-header">Week 1 • Days 1-7</div>
+
+            <div th:each="bill : ${billsByWeek.get(1)}"
+                 class="bill-row"
+                 th:classappend="${paidStatus.get(bill.getId()) ? 'paid' : ''} +
+                                ${overdueBills.contains(bill.getId()) ? ' overdue' : ''}">
+
+                <div class="paid-checkbox"
+                     th:onclick="'toggleBillPaid(' + ${bill.getId()} + ', ' + ${monthValue} + ', ' + ${yearValue} + ')'">
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+
+                <div class="bill-date">
+                    <div class="date-day" th:text="${bill.getDueDay()}">1</div>
+                    <div class="date-month" th:text="${currentMonth.substring(0,3).toUpperCase()}">FEB</div>
+                </div>
+
+                <div class="bill-details">
+                    <div class="bill-details-name" th:text="${bill.getName()}">Bill Name</div>
+                    <div class="bill-details-info">
+                        <span class="bill-category" th:if="${bill.getCategory() != null}"
+                              th:text="${bill.getCategory().getName()}">Category</span>
+                        <span class="bill-frequency" th:text="${bill.getFrequency().toString().toLowerCase()}">monthly</span>
+                    </div>
+                </div>
+
+                <div class="bill-amount-display"
+                     th:text="${'$' + #numbers.formatDecimal(bill.getAmount(), 1, 2)}">$0.00</div>
+
+                <div class="bill-actions-row">
+                    <button class="action-icon-btn" title="Edit"
+                            th:onclick="'openEditModal(' + ${bill.getId()} + ')'">
+                        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <form th:action="@{/bills/delete/{id}(id=${bill.getId()})}" method="POST" style="margin:0;">
+                        <input type="hidden" name="username" th:value="${user.getUsername()}">
+                        <input type="hidden" name="month" th:value="${monthValue}">
+                        <input type="hidden" name="year" th:value="${yearValue}">
+                        <button type="submit" class="action-icon-btn delete" title="Delete"
+                                onclick="return confirm('Delete this bill?')">
+                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Week 2 -->
+        <div th:if="${billsByWeek.containsKey(2)}" class="timeline-week">
+            <div class="week-header">Week 2 • Days 8-14</div>
+
+            <div th:each="bill : ${billsByWeek.get(2)}"
+                 class="bill-row"
+                 th:classappend="${paidStatus.get(bill.getId()) ? 'paid' : ''} +
+                                ${overdueBills.contains(bill.getId()) ? ' overdue' : ''}">
+
+                <div class="paid-checkbox"
+                     th:onclick="'toggleBillPaid(' + ${bill.getId()} + ', ' + ${monthValue} + ', ' + ${yearValue} + ')'">
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+
+                <div class="bill-date">
+                    <div class="date-day" th:text="${bill.getDueDay()}">1</div>
+                    <div class="date-month" th:text="${currentMonth.substring(0,3).toUpperCase()}">FEB</div>
+                </div>
+
+                <div class="bill-details">
+                    <div class="bill-details-name" th:text="${bill.getName()}">Bill Name</div>
+                    <div class="bill-details-info">
+                        <span class="bill-category" th:if="${bill.getCategory() != null}"
+                              th:text="${bill.getCategory().getName()}">Category</span>
+                        <span class="bill-frequency" th:text="${bill.getFrequency().toString().toLowerCase()}">monthly</span>
+                    </div>
+                </div>
+
+                <div class="bill-amount-display"
+                     th:text="${'$' + #numbers.formatDecimal(bill.getAmount(), 1, 2)}">$0.00</div>
+
+                <div class="bill-actions-row">
+                    <button class="action-icon-btn" title="Edit"
+                            th:onclick="'openEditModal(' + ${bill.getId()} + ')'">
+                        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <form th:action="@{/bills/delete/{id}(id=${bill.getId()})}" method="POST" style="margin:0;">
+                        <input type="hidden" name="username" th:value="${user.getUsername()}">
+                        <input type="hidden" name="month" th:value="${monthValue}">
+                        <input type="hidden" name="year" th:value="${yearValue}">
+                        <button type="submit" class="action-icon-btn delete" title="Delete"
+                                onclick="return confirm('Delete this bill?')">
+                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Week 3 -->
+        <div th:if="${billsByWeek.containsKey(3)}" class="timeline-week">
+            <div class="week-header">Week 3 • Days 15-21</div>
+
+            <div th:each="bill : ${billsByWeek.get(3)}"
+                 class="bill-row"
+                 th:classappend="${paidStatus.get(bill.getId()) ? 'paid' : ''} +
+                                ${overdueBills.contains(bill.getId()) ? ' overdue' : ''}">
+
+                <div class="paid-checkbox"
+                     th:onclick="'toggleBillPaid(' + ${bill.getId()} + ', ' + ${monthValue} + ', ' + ${yearValue} + ')'">
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+
+                <div class="bill-date">
+                    <div class="date-day" th:text="${bill.getDueDay()}">1</div>
+                    <div class="date-month" th:text="${currentMonth.substring(0,3).toUpperCase()}">FEB</div>
+                </div>
+
+                <div class="bill-details">
+                    <div class="bill-details-name" th:text="${bill.getName()}">Bill Name</div>
+                    <div class="bill-details-info">
+                        <span class="bill-category" th:if="${bill.getCategory() != null}"
+                              th:text="${bill.getCategory().getName()}">Category</span>
+                        <span class="bill-frequency" th:text="${bill.getFrequency().toString().toLowerCase()}">monthly</span>
+                    </div>
+                </div>
+
+                <div class="bill-amount-display"
+                     th:text="${'$' + #numbers.formatDecimal(bill.getAmount(), 1, 2)}">$0.00</div>
+
+                <div class="bill-actions-row">
+                    <button class="action-icon-btn" title="Edit"
+                            th:onclick="'openEditModal(' + ${bill.getId()} + ')'">
+                        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <form th:action="@{/bills/delete/{id}(id=${bill.getId()})}" method="POST" style="margin:0;">
+                        <input type="hidden" name="username" th:value="${user.getUsername()}">
+                        <input type="hidden" name="month" th:value="${monthValue}">
+                        <input type="hidden" name="year" th:value="${yearValue}">
+                        <button type="submit" class="action-icon-btn delete" title="Delete"
+                                onclick="return confirm('Delete this bill?')">
+                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Week 4 -->
+        <div th:if="${billsByWeek.containsKey(4)}" class="timeline-week">
+            <div class="week-header">Week 4 • Days 22-28</div>
+
+            <div th:each="bill : ${billsByWeek.get(4)}"
+                 class="bill-row"
+                 th:classappend="${paidStatus.get(bill.getId()) ? 'paid' : ''} +
+                                ${overdueBills.contains(bill.getId()) ? ' overdue' : ''}">
+
+                <div class="paid-checkbox"
+                     th:onclick="'toggleBillPaid(' + ${bill.getId()} + ', ' + ${monthValue} + ', ' + ${yearValue} + ')'">
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+
+                <div class="bill-date">
+                    <div class="date-day" th:text="${bill.getDueDay()}">1</div>
+                    <div class="date-month" th:text="${currentMonth.substring(0,3).toUpperCase()}">FEB</div>
+                </div>
+
+                <div class="bill-details">
+                    <div class="bill-details-name" th:text="${bill.getName()}">Bill Name</div>
+                    <div class="bill-details-info">
+                        <span class="bill-category" th:if="${bill.getCategory() != null}"
+                              th:text="${bill.getCategory().getName()}">Category</span>
+                        <span class="bill-frequency" th:text="${bill.getFrequency().toString().toLowerCase()}">monthly</span>
+                    </div>
+                </div>
+
+                <div class="bill-amount-display"
+                     th:text="${'$' + #numbers.formatDecimal(bill.getAmount(), 1, 2)}">$0.00</div>
+
+                <div class="bill-actions-row">
+                    <button class="action-icon-btn" title="Edit"
+                            th:onclick="'openEditModal(' + ${bill.getId()} + ')'">
+                        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <form th:action="@{/bills/delete/{id}(id=${bill.getId()})}" method="POST" style="margin:0;">
+                        <input type="hidden" name="username" th:value="${user.getUsername()}">
+                        <input type="hidden" name="month" th:value="${monthValue}">
+                        <input type="hidden" name="year" th:value="${yearValue}">
+                        <button type="submit" class="action-icon-btn delete" title="Delete"
+                                onclick="return confirm('Delete this bill?')">
+                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Week 5 (if exists) -->
+        <div th:if="${billsByWeek.containsKey(5)}" class="timeline-week">
+            <div class="week-header">Week 5 • Days 29-31</div>
+
+            <div th:each="bill : ${billsByWeek.get(5)}"
+                 class="bill-row"
+                 th:classappend="${paidStatus.get(bill.getId()) ? 'paid' : ''} +
+                                ${overdueBills.contains(bill.getId()) ? ' overdue' : ''}">
+
+                <div class="paid-checkbox"
+                     th:onclick="'toggleBillPaid(' + ${bill.getId()} + ', ' + ${monthValue} + ', ' + ${yearValue} + ')'">
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+
+                <div class="bill-date">
+                    <div class="date-day" th:text="${bill.getDueDay()}">1</div>
+                    <div class="date-month" th:text="${currentMonth.substring(0,3).toUpperCase()}">FEB</div>
+                </div>
+
+                <div class="bill-details">
+                    <div class="bill-details-name" th:text="${bill.getName()}">Bill Name</div>
+                    <div class="bill-details-info">
+                        <span class="bill-category" th:if="${bill.getCategory() != null}"
+                              th:text="${bill.getCategory().getName()}">Category</span>
+                        <span class="bill-frequency" th:text="${bill.getFrequency().toString().toLowerCase()}">monthly</span>
+                    </div>
+                </div>
+
+                <div class="bill-amount-display"
+                     th:text="${'$' + #numbers.formatDecimal(bill.getAmount(), 1, 2)}">$0.00</div>
+
+                <div class="bill-actions-row">
+                    <button class="action-icon-btn" title="Edit"
+                            th:onclick="'openEditModal(' + ${bill.getId()} + ')'">
+                        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <form th:action="@{/bills/delete/{id}(id=${bill.getId()})}" method="POST" style="margin:0;">
+                        <input type="hidden" name="username" th:value="${user.getUsername()}">
+                        <input type="hidden" name="month" th:value="${monthValue}">
+                        <input type="hidden" name="year" th:value="${yearValue}">
+                        <button type="submit" class="action-icon-btn delete" title="Delete"
+                                onclick="return confirm('Delete this bill?')">
+                            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal()">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <h2 id="modalTitle">Add Bill</h2>
+        <p class="modal-sub">Set up a recurring bill or one-time payment</p>
+
+        <form th:action="@{/bills/create}" method="POST" id="billForm">
+            <input type="hidden" name="username" th:value="${user.getUsername()}">
+            <input type="hidden" name="billingMonth" id="billingMonth" th:value="${monthValue}">
+            <input type="hidden" name="billingYear" id="billingYear" th:value="${yearValue}">
+
+            <div class="m-field">
+                <label>Bill Name</label>
+                <div class="m-input-wrap">
+                    <input type="text" name="name" id="billName" placeholder="e.g. Electric Bill" required>
+                </div>
+            </div>
+
+            <div class="m-field">
+                <label>Due Day of Month</label>
+                <div class="m-input-wrap">
+                    <input type="number" name="dueDay" id="dueDay" min="1" max="31" placeholder="1-31" required>
+                </div>
+            </div>
+
+            <div class="m-field">
+                <label>Category (Optional)</label>
+                <div class="m-input-wrap">
+                    <select name="categoryName" id="categoryName">
+                        <option value="">None</option>
+                        <option th:each="cat : ${categories}" th:value="${cat.getName()}" th:text="${cat.getName()}">Category</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="m-field">
+                <label>Amount</label>
+                <div class="m-input-wrap">
+                    <input type="number" name="amount" id="amount" step="0.01" min="0" placeholder="0.00" required>
+                </div>
+            </div>
+
+            <div class="m-field">
+                <label>Frequency</label>
+                <div class="m-input-wrap">
+                    <select name="frequency" id="frequency" required>
+                        <option value="MONTHLY">Monthly</option>
+                        <option value="BI_WEEKLY">Bi-Weekly</option>
+                        <option value="BI_ANNUAL">Bi-Annual</option>
+                        <option value="ANNUAL">Annual</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="modal-submit">Save Bill</button>
+        </form>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    function openModal() {
+        document.getElementById('modalTitle').textContent = 'Add Bill';
+        document.getElementById('billForm').action = '/bills/create';
+        document.getElementById('billForm').reset();
+        document.getElementById('modalOverlay').classList.add('active');
+    }
+
+    function openEditModal(billId) {
+        // For edit, you'd fetch bill data and pre-fill form
+        // Then change form action to /bills/update/{id}
+        document.getElementById('modalTitle').textContent = 'Edit Bill';
+        document.getElementById('billForm').action = '/bills/update/' + billId;
+        document.getElementById('modalOverlay').classList.add('active');
+        // TODO: Fetch and populate bill data
+    }
+
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('active');
+    }
+
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeModal();
+    });
+
+    function toggleBillPaid(billId, month, year) {
+        fetch(`/bills/mark-paid/${billId}?month=${month}&year=${year}`, {
+            method: 'POST'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            })
+            .catch(err => console.error('Error:', err));
+    }
+</script>
 
 </body>
 </html>
