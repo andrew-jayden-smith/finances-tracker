@@ -1,13 +1,14 @@
 package com.andrewsmith.financestracker.controller;
 
-import ch.qos.logback.core.model.Model;
 import com.andrewsmith.financestracker.model.Account;
+import com.andrewsmith.financestracker.repository.CategoryRepository;
+import org.springframework.ui.Model;
 import com.andrewsmith.financestracker.model.Bill;
 import com.andrewsmith.financestracker.model.User;
 import com.andrewsmith.financestracker.repository.MerchantRepository;
 import com.andrewsmith.financestracker.service.AccountService;
 import com.andrewsmith.financestracker.service.BillService;
-import com.andrewsmith.financestracker.service.CategoryService;
+import com.andrewsmith.financestracker.repository.CategoryRepository;
 import com.andrewsmith.financestracker.service.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Repository;
@@ -16,9 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.YearMonth;
+import java.time.format.TextStyle;
+import java.util.*;
 
 @Controller
 @RequestMapping("/bills")
@@ -27,15 +28,15 @@ public class BillController {
     // Call and Inject all services and repos needed
     private final BillService billService;
     private final UserService userService;
-    private final CategoryService categoryService;
     private final AccountService accountService;
     private final MerchantRepository merchantRepository;
+    private final CategoryRepository categoryRepository;
 
-    public BillController(BillService billService, UserService userService, CategoryService categoryService, AccountService accountService, MerchantRepository merchantRepository) {
+    public BillController(BillService billService, UserService userService, CategoryRepository categoryRepository, AccountService accountService, MerchantRepository merchantRepository) {
         this.billService = billService;
         this.userService = userService;
-        this.categoryService = categoryService;
         this.accountService = accountService;
+        this.categoryRepository = categoryRepository;
         this.merchantRepository = merchantRepository;
     }
 
@@ -79,17 +80,44 @@ public class BillController {
 
         // Map payment status(key: billId, value is true/false)
         Map<Long, Boolean> paidStatus = new HashMap<>();
-        // Check for overdue bills, if its over the target month
+        // Set paid status
         for (Bill bill : bills) {
             boolean isPaid = billService.isBillPaidForMonth(bill.getId(), specificMonth, specificYear);
             paidStatus.put(bill.getId(), isPaid);
         }
 
-        // Month navigation
+        //Check for overdue bills
+        Set<Long> overdueBills = new HashSet<>();
+        if(specificMonth == today.getMonthValue() && specificYear == today.getYear()) {
+            List<Bill> overdues = billService.getOverdueBills(user, today);
+            overdues.forEach(b -> overdueBills.add(b.getId()));
+        }
 
+        // Month navigation using Java built in
+        YearMonth currenYearMonth = YearMonth.of(specificYear, specificMonth);
+        YearMonth previousMonth = currenYearMonth.minusMonths(1);
+        YearMonth nextMonth = currenYearMonth.plusMonths(1);
 
+        String monthName = currenYearMonth.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
 
-        return "bills/schedule";
+        model.addAttribute("user", user);
+        model.addAttribute("bills", bills);
+        model.addAttribute("stats", stats);
+        model.addAttribute("billsByWeek", billsByWeek);
+        model.addAttribute("paidStatus", paidStatus);
+        model.addAttribute("overdueBills", overdueBills);
+        model.addAttribute("currentMonth", monthName);
+        model.addAttribute("currentYear", specificYear);
+        model.addAttribute("monthValue", specificMonth);
+        model.addAttribute("yearValue", specificYear);
+        model.addAttribute("previousMonth", previousMonth.getMonthValue());
+        model.addAttribute("previousYear", previousMonth.getYear());
+        model.addAttribute("nextMonth", nextMonth.getMonthValue());
+        model.addAttribute("nextYear", nextMonth.getYear());
+        model.addAttribute("today", today);
+        model.addAttribute("categories", categoryRepository.findAll());
+
+        return "bills-schedule";
     }
 
     // Month navigation
