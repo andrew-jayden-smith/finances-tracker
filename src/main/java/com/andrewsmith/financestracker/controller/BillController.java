@@ -1,10 +1,8 @@
 package com.andrewsmith.financestracker.controller;
 
-import com.andrewsmith.financestracker.model.Account;
+import com.andrewsmith.financestracker.model.*;
 import com.andrewsmith.financestracker.repository.CategoryRepository;
 import org.springframework.ui.Model;
-import com.andrewsmith.financestracker.model.Bill;
-import com.andrewsmith.financestracker.model.User;
 import com.andrewsmith.financestracker.repository.MerchantRepository;
 import com.andrewsmith.financestracker.service.AccountService;
 import com.andrewsmith.financestracker.service.BillService;
@@ -12,10 +10,9 @@ import com.andrewsmith.financestracker.repository.CategoryRepository;
 import com.andrewsmith.financestracker.service.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
@@ -117,36 +114,128 @@ public class BillController {
         model.addAttribute("today", today);
         model.addAttribute("categories", categoryRepository.findAll());
 
-        return "bills-schedule";
+        return "bill-schedule";
     }//1'1
-
     // Post mapping for create bill
-    // if user is null case
-    // Call new bill, set status, set frequency
-    // Link category if its provided "should be"
-    // return the link of "redirect:/bills/schedule?username=" + username + "&month=" + billingMonth + "&year=" + billingYear;
+    @PostMapping("/create")
+    public String createBill(@RequestParam String username,
+                             @RequestParam String name,
+                             @RequestParam BigDecimal amount,
+                             @RequestParam int dueDay,
+                             @RequestParam int billingMonth,
+                             @RequestParam int billingYear,
+                             @RequestParam String frequency,
+                             @RequestParam(required = false) String categoryName, Model model) {
+
+        User user = userService.getUserByUsername(username).orElse(null);
+        if (user == null) {
+            return "redirect:/user/login";
+        }
+        // Call new bill, set status, set frequency
+        Bill bill = new Bill(user, name, amount, dueDay, billingMonth, billingYear);
+        bill.setFrequency(BillFrequency.valueOf(frequency));
+        bill.setStatus(BillStatus.DUE);
+
+        // Link category if its provided "should be" get it from the repo
+        if (categoryName != null && !categoryName.isEmpty()) {
+            Category category = categoryRepository.findCategoriesByName(categoryName);
+            // If there is no category already create one
+            if (category == null) {
+                category= new Category(categoryName);
+                categoryRepository.save(category);
+            }
+            bill.setCategory(category);
+        }
+        billService.createBill(bill);
+
+        return "redirect:/bills/schedule?username=" + username + "&month=" + billingMonth + "&year=" + billingYear;
+    }
 
     // Post mapping for handling update bill
-    // Call all constructors
-    // case if the bill is null then return to the link "redirect:/bills/schedule?username=" + username;
-    // bill.set.. variable names
-    // if case if the category is not null and doesnt have a name, call category to find that name, if category is null create a new categoryName for it
-    // return same link as creating bill
+    @PostMapping("/update/{id}")
+    public String updateBill(@PathVariable Long id,
+                             @RequestParam String username,
+                             @RequestParam String name,
+                             @RequestParam BigDecimal amount,
+                             @RequestParam int dueDay,
+                             @RequestParam int billingMonth,
+                             @RequestParam int billingYear,
+                             @RequestParam String frequency,
+                             @RequestParam(required = false) String categoryName) {
+
+        // Find the bill by its id
+        Bill bill = billService.getBillById(id).orElse(null);
+        if (bill == null) {
+            // If the bill is null redirect to the users dashboard
+            return "redirect:/bills/schedule?username=" + username;
+        }
+        bill.setName(name);
+        bill.setAmount(amount);
+        bill.setDueDay(dueDay);
+        bill.setFrequency(BillFrequency.valueOf(frequency));
+        bill.setBillingMonth(billingMonth);
+        bill.setBillingYear(billingYear);
+
+        // If there is no category already create one
+        if (categoryName != null && !categoryName.isEmpty()) {
+            Category category = categoryRepository.findCategoriesByName(categoryName);
+            if (category == null) {
+                category= new Category(categoryName);
+                categoryRepository.save(category);
+            }
+            bill.setCategory(category);
+        }
+        billService.updateBill(bill);
+
+        return "redirect:/bills/schedule?username=" + username + "&month=" + billingMonth + "&year=" + billingYear;
+    }
 
     // Post map delete a bill
-    // Bill bill = find by id
-    // if its not null then .deleteBill
-    // return "redirect:/bills/schedule?username=" + username + "&month=" + month + "&year=" + year;
+    @PostMapping("/delete/{id}")
+    public String deleteBill(@PathVariable Long id, @RequestParam String username, @RequestParam Integer month, @RequestParam Integer year) {
+        // Find the bill
+        Bill bill = billService.getBillById(id).orElse(null);
+        // If the bill is not null (it exists)
+        if (bill != null) {
+            billService.deleteBill(bill);
+        }
+        return "redirect:/bills/schedule?username=" + username + "&month=" + month + "&year=" + year;
+    }
 
-    // Get mapping "mark-paid/{id}", response body
-    // Map String Boolean for markBillPaid
-    // Call the bill by id from service
-    // response is a new HashMap
-    // if the bill is not null, then the bill is boolean alreadyPaid for isBillPaidForMonth, else its not been paid
-    // if its not already paid, set the paidDate, .recordPayment, response.put
+    @PostMapping("mark-paid/{id}")
+    @ResponseBody
+    // Map bills with boolean for paid or due
+    public Map<String, Boolean> markBillPaid(@PathVariable Long id, @RequestParam Integer month, @RequestParam Integer year) {
+        Bill bill = billService.getBillById(id).orElse(null);
+        Map<String, Boolean> response = new HashMap<>();
+        // If the bill exists
+        if (bill != null) {
+            // Check if bills been paid
+            boolean alreadyPaid = billService.isBillPaidForMonth(id, month, year);
 
+            if (!alreadyPaid) {
+                LocalDate paidDate = LocalDate.of(year, month, LocalDate.now().getDayOfMonth());
+                billService.recordPayment(bill, paidDate, bill.getAmount().doubleValue(), null);
+                response.put("success", true);
+                response.put("paid", true);
+            } else {
+                // Already paid logic
+                response.put("success", true);
+                response.put("paid", true);
+            }
+        } else {
+            response.put("success", false);
+            response.put("paid", false);
+        }
+        return response;
+    }
     // Generate monthly bills
-    // post map "generate-month"
-    // getUserByUsername, if its not null then generateMonthlyBills
-    // return the same redirect as delete bill
+    @PostMapping("generate-month")
+    public String generateMonthlyBills(@RequestParam String username, @RequestParam Integer month, @RequestParam Integer year) {
+        User user = userService.getUserByUsername(username).orElse(null);
+        if (user != null) {
+            billService.generateMonthlyBills(user, month, year);
+        }
+        return "redirect:/bills/schedule?username=" + username + "&month=" + month + "&year=" + year;
+    }
 }

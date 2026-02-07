@@ -31,6 +31,11 @@ public class AccountService {
     public Account createAccount(Account account) {
         return accountRepository.save(account);
     }
+    // Update Account
+    public Account updateAccount(Account account) {
+        return accountRepository.save(account);
+    }
+
     // Delete an account
     public void deleteAccount(Long accountId) {
         accountRepository.deleteById(accountId);

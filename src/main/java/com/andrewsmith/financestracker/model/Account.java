@@ -25,6 +25,9 @@ public class Account {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(name = "display_order")
+    private Integer displayOrder;
+
     public Account() {}
 
     public Account(String name, BigDecimal openingBalance, LocalDateTime openingDate, User user) {
@@ -67,6 +70,14 @@ public class Account {
     }
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Integer getDisplayOrder() {
+        return displayOrder;
+    }
+
+    public void setDisplayOrder(Integer displayOrder) {
+        this.displayOrder = displayOrder;
     }
 }
 
