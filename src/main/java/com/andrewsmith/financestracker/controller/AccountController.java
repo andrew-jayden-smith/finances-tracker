@@ -70,7 +70,6 @@ public class AccountController {
         BigDecimal netWorth = totalAssets.add(totalLiabilities);
 
         // Bills
-
         LocalDate today = LocalDate.now();
         int month = today.getMonthValue();
         int year = today.getYear();
@@ -111,6 +110,7 @@ public class AccountController {
         model.addAttribute("overdueBills", overdueBills);
         model.addAttribute("currentMonthName", currentMonthName);
         model.addAttribute("currentDayOfMonth", today.getDayOfMonth());
+        model.addAttribute("totalBills", billService.getAllBillsForUser(user).size());
 
         return "dashboard";
     }

@@ -483,7 +483,7 @@
             <div class="summary-card sc-amber">
                 <div class="accent-dot"></div>
                 <div class="card-label">Bills Due</div>
-                <div class="card-value" th:text="${billStats.get('countDue')}">0</div>
+                <div class="card-value" th:text="${billStats.get('totalBills')}">0</div>
                 <div class="card-sub" th:text="${'$' + #numbers.formatDecimal(billStats.get('remaining'), 1, 2)}">$0.00 remaining</div>
             </div>
         </div>

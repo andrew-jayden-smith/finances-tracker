@@ -3,6 +3,7 @@ package com.andrewsmith.financestracker;
 import com.andrewsmith.financestracker.model.Account;
 import com.andrewsmith.financestracker.model.User;
 import com.andrewsmith.financestracker.repository.UserRepository;
+import com.andrewsmith.financestracker.service.BillService;
 import com.andrewsmith.financestracker.service.UserService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -21,7 +22,7 @@ public class FinancesTrackerApplication {
     }
 
     @Bean
-    CommandLineRunner testUserRepo(UserRepository userRepository, UserService userService) {
+    CommandLineRunner testUserRepo(UserRepository userRepository, UserService userService, BillService billService) {
         return args -> {
             System.out.println("=== Testing UserService & SQL Connection ===");
 
@@ -60,6 +61,8 @@ public class FinancesTrackerApplication {
                 System.out.println("Total Assets: " + totalAssets);
                 System.out.println("Total Debts: " + totalDebts);
                 System.out.println("Net Worth: " + netWorth);
+
+                System.out.println("Total Bills: " + billService.getAllBillsForUser(user).size());
 
             } else {
                 System.out.println("User not found!");
