@@ -503,6 +503,7 @@
                 </div>
 
                 <div th:each="bill : ${currentMonthBills}"
+                     th:id="'bill-item-' + ${bill.getId()}"
                      class="bill-item"
                      th:classappend="${billsPaidStatus.get(bill.getId()) ? 'paid' : ''} +
                                     ${overdueBills.contains(bill) ? ' overdue' : ''}">
@@ -651,11 +652,25 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    location.reload();
+                    // Find the bill item by ID
+                    const billItem = document.getElementById(`bill-item-${billId}`);
+                    if (billItem) {
+                        // Toggle the "paid" class
+                        if (billItem.classList.contains('paid')) {
+                            billItem.classList.remove('paid');
+                        } else {
+                            billItem.classList.add('paid');
+                            billItem.classList.remove('overdue');
+                        }
+                    }
                 }
             })
-            .catch(err => console.error('Error:', err));
+            .catch(err => {
+                console.error('Error toggling bill:', err);
+                alert('Failed to update bill status. Please try again.');
+            });
     }
+
 
     function openAccountModal() {
         document.getElementById('accountModal').classList.add('active');

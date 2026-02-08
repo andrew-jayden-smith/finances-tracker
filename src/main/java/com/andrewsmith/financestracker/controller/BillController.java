@@ -202,35 +202,36 @@ public class BillController {
         return "redirect:/bills/schedule?username=" + username + "&month=" + month + "&year=" + year;
     }
 
-    @PostMapping("mark-paid/{id}")
+    @PostMapping("/mark-paid/{id}")
     @ResponseBody
-    // Map bills with boolean for paid or due
-    public Map<String, Boolean> markBillPaid(@PathVariable Long id, @RequestParam Integer month, @RequestParam Integer year) {
+    public Map<String, Boolean> markBillPaid(
+            @PathVariable Long id,
+            @RequestParam Integer month,
+            @RequestParam Integer year
+    ) {
         Bill bill = billService.getBillById(id).orElse(null);
         Map<String, Boolean> response = new HashMap<>();
-        // If the bill exists
+
         if (bill != null) {
-            // Check if bills been paid
             boolean alreadyPaid = billService.isBillPaidForMonth(id, month, year);
 
             if (!alreadyPaid) {
                 LocalDate paidDate = LocalDate.of(year, month, LocalDate.now().getDayOfMonth());
                 billService.recordPayment(bill, paidDate, bill.getAmount().doubleValue(), null);
-                response.put("success", true);
-                response.put("paid", true);
-            } else {
-                // Already paid logic
-                response.put("success", true);
-                response.put("paid", true);
             }
+
+            response.put("success", true);
+            response.put("paid", true);
         } else {
             response.put("success", false);
             response.put("paid", false);
         }
+
         return response;
     }
+
     // Generate monthly bills
-    @PostMapping("generate-month")
+    @PostMapping("/generate-month")
     public String generateMonthlyBills(@RequestParam String username, @RequestParam Integer month, @RequestParam Integer year) {
         User user = userService.getUserByUsername(username).orElse(null);
         if (user != null) {
