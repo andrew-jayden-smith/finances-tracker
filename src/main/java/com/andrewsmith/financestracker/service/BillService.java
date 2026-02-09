@@ -76,7 +76,20 @@ public class BillService {
     }
 
     public boolean isBillPaidForMonth(Long billId, int month, int year) {
-        return billPaymentRepository.isPaidForMonth(billId, month, year);
+        try {
+            Optional<Bill> billOpt = getBillById(billId);
+
+            if (billOpt.isPresent()) {
+                Bill bill = billOpt.get();
+                return bill.getStatus() == BillStatus.PAID;
+            }
+
+            return false;
+
+        } catch (Exception e) {
+            System.out.println("Error checking bill: " + e.getMessage());
+            return false;
+        }
     }
 
     public Optional<BillPayment> getPaymentForBillInMonth(Bill bill, int month, int year) {

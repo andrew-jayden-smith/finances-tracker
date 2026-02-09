@@ -218,6 +218,11 @@ public class BillController {
             if (!alreadyPaid) {
                 LocalDate paidDate = LocalDate.of(year, month, LocalDate.now().getDayOfMonth());
                 billService.recordPayment(bill, paidDate, bill.getAmount().doubleValue(), null);
+
+                bill.setStatus(BillStatus.PAID);
+                billService.updateBill(bill);
+
+                response.put("success", true);
             }
 
             response.put("success", true);

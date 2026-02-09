@@ -78,7 +78,7 @@ public class AccountController {
         Map<Long, Boolean> billsPaidStatus = new HashMap<>();
         for (Bill bill : currentMonthBills) {
             // Use the bill ID from the database, not a newly generated object
-            boolean isPaid = billService.isBillPaidForMonth(bill.getId(), bill.getBillingMonth(), bill.getBillingYear());
+            boolean isPaid = billService.isBillPaidForMonth(bill.getId(), month, year);
             billsPaidStatus.put(bill.getId(), isPaid);
 
             // Optional: also update the bill status for display
