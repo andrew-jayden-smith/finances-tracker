@@ -1,9 +1,6 @@
 package com.andrewsmith.financestracker.controller;
 
-import com.andrewsmith.financestracker.model.Account;
-import com.andrewsmith.financestracker.model.Bill;
-import com.andrewsmith.financestracker.model.Transaction;
-import com.andrewsmith.financestracker.model.User;
+import com.andrewsmith.financestracker.model.*;
 import com.andrewsmith.financestracker.service.AccountService;
 import com.andrewsmith.financestracker.service.BillService;
 import com.andrewsmith.financestracker.service.TransactionService;
@@ -80,8 +77,12 @@ public class AccountController {
         // Check payment status for each bill
         Map<Long, Boolean> billsPaidStatus = new HashMap<>();
         for (Bill bill : currentMonthBills) {
-            boolean isPaid = billService.isBillPaidForMonth(bill.getId(), month, year);
+            // Use the bill ID from the database, not a newly generated object
+            boolean isPaid = billService.isBillPaidForMonth(bill.getId(), bill.getBillingMonth(), bill.getBillingYear());
             billsPaidStatus.put(bill.getId(), isPaid);
+
+            // Optional: also update the bill status for display
+            bill.setStatus(isPaid ? BillStatus.PAID : BillStatus.DUE);
         }
 
         // Get overdue bills

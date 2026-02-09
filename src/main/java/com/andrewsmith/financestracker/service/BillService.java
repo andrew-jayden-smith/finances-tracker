@@ -76,7 +76,7 @@ public class BillService {
     }
 
     public boolean isBillPaidForMonth(Long billId, int month, int year) {
-        return billPaymentRepository.existsByBillIdAndMonthYear(billId, month, year);
+        return billPaymentRepository.isPaidForMonth(billId, month, year);
     }
 
     public Optional<BillPayment> getPaymentForBillInMonth(Bill bill, int month, int year) {

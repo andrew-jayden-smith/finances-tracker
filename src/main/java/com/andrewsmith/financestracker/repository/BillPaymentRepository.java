@@ -33,8 +33,9 @@ public interface BillPaymentRepository extends JpaRepository<BillPayment, Long> 
     @Query("SELECT CASE WHEN COUNT(bp) > 0 THEN true ELSE false END " +
             "FROM BillPayment bp WHERE bp.bill.id = :billId AND " +
             "MONTH(bp.paidDate) = :month AND YEAR(bp.paidDate) = :year")
-    boolean existsByBillIdAndMonthYear(
+    boolean isPaidForMonth(
             @Param("billId") Long billId,
             @Param("month") int month,
-            @Param("year") int year);
+            @Param("year") int year
+    );
 }
