@@ -652,22 +652,22 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Find the bill item by ID
                     const billItem = document.getElementById(`bill-item-${billId}`);
                     if (billItem) {
-                        // Toggle the "paid" class
-                        if (billItem.classList.contains('paid')) {
-                            billItem.classList.remove('paid');
-                        } else {
+                        if (data.paid) {
+                            // Mark as paid
                             billItem.classList.add('paid');
                             billItem.classList.remove('overdue');
+                        } else {
+                            // Mark as unpaid
+                            billItem.classList.remove('paid');
                         }
                     }
                 }
             })
             .catch(err => {
                 console.error('Error toggling bill:', err);
-                alert('Failed to update bill status. Please try again.');
+                alert('Failed to update bill status.');
             });
     }
 

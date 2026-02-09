@@ -170,4 +170,17 @@ public class BillService {
             }
         }
     }
+    // Delete payement to mark back to DUE
+    public void deletePaymentForMonth(Bill bill, int month, int year) {
+        try {
+            Optional<BillPayment> payment = billPaymentRepository.findByBillAndMonthYear(bill, month, year);
+            if (payment.isPresent()) {
+                billPaymentRepository.delete(payment.get());
+                System.out.println("Deleted payment record for bill: " + bill.getName());
+            }
+        } catch (Exception e) {
+            System.out.println("Error deleting payment: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 }

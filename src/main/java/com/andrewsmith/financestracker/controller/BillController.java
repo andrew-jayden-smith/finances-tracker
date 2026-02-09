@@ -204,29 +204,36 @@ public class BillController {
 
     @PostMapping("/mark-paid/{id}")
     @ResponseBody
-    public Map<String, Boolean> markBillPaid(
-            @PathVariable Long id,
-            @RequestParam Integer month,
-            @RequestParam Integer year
-    ) {
+    public Map<String, Boolean> markBillPaid(@PathVariable Long id,
+                                             @RequestParam Integer month,
+                                             @RequestParam Integer year) {
         Bill bill = billService.getBillById(id).orElse(null);
         Map<String, Boolean> response = new HashMap<>();
 
         if (bill != null) {
-            boolean alreadyPaid = billService.isBillPaidForMonth(id, month, year);
+            boolean currentlyPaid = billService.isBillPaidForMonth(id, month, year);
 
-            if (!alreadyPaid) {
+            if (!currentlyPaid) {
+                // ✅ Mark as PAID
                 LocalDate paidDate = LocalDate.of(year, month, LocalDate.now().getDayOfMonth());
                 billService.recordPayment(bill, paidDate, bill.getAmount().doubleValue(), null);
-
                 bill.setStatus(BillStatus.PAID);
                 billService.updateBill(bill);
 
                 response.put("success", true);
-            }
+                response.put("paid", true);
 
-            response.put("success", true);
-            response.put("paid", true);
+            } else {
+                // ✅ Mark as DUE (unpaid)
+                bill.setStatus(BillStatus.DUE);
+                billService.updateBill(bill);
+
+                // Optional: Delete the payment record
+                billService.deletePaymentForMonth(bill, month, year);
+
+                response.put("success", true);
+                response.put("paid", false);
+            }
         } else {
             response.put("success", false);
             response.put("paid", false);
