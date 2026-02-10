@@ -138,6 +138,7 @@
             display: grid;
             grid-template-columns: 350px 1fr 280px;
             gap: 24px;
+            align-items: start;
         }
 
         /* Section headers */
@@ -162,20 +163,22 @@
         .add-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.5; }
         .add-btn:hover { background: var(--green-glow); }
 
-        /* Bills Panel (Left) */
+        /* Bills Panel (Left) - FIXED HEIGHT WITH SCROLL */
         .bills-panel {
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 20px;
-            max-height: 600px;
-            overflow-y: auto;
+            height: 650px;
+            display: flex;
+            flex-direction: column;
         }
         .bills-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
+            flex-shrink: 0;
         }
         .bills-month {
             font-family: 'Syne', sans-serif;
@@ -189,6 +192,29 @@
             text-decoration: none;
         }
         .view-all-link:hover { text-decoration: underline; }
+
+        /* Scrollable content area for bills */
+        .bills-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin: 0 -8px;
+            padding: 0 8px;
+        }
+        .bills-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .bills-content::-webkit-scrollbar-track {
+            background: var(--bg-input);
+            border-radius: 3px;
+        }
+        .bills-content::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+        .bills-content::-webkit-scrollbar-thumb:hover {
+            background: var(--green-main);
+        }
 
         .bill-item {
             background: var(--bg-input);
@@ -233,13 +259,40 @@
             flex-shrink: 0;
         }
 
-        /* Accounts Panel (Center) */
+        /* Accounts Panel (Center) - FIXED HEIGHT WITH SCROLL */
         .accounts-panel {
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 20px;
+            height: 650px;
+            display: flex;
+            flex-direction: column;
         }
+
+        /* Scrollable content area for accounts */
+        .accounts-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin: 0 -8px;
+            padding: 0 8px;
+        }
+        .accounts-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .accounts-content::-webkit-scrollbar-track {
+            background: var(--bg-input);
+            border-radius: 3px;
+        }
+        .accounts-content::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+        .accounts-content::-webkit-scrollbar-thumb:hover {
+            background: var(--green-main);
+        }
+
         .account-card {
             background: var(--bg-input);
             border: 1px solid var(--border);
@@ -417,6 +470,10 @@
             .summary-row {
                 grid-template-columns: repeat(2, 1fr);
             }
+            .bills-panel, .accounts-panel {
+                height: auto;
+                max-height: 500px;
+            }
         }
 
         @media (max-width: 768px) {
@@ -483,7 +540,7 @@
             <div class="summary-card sc-amber">
                 <div class="accent-dot"></div>
                 <div class="card-label">Bills Due</div>
-                <div class="card-value" th:text="${billStats.get('totalBills')}">0</div>
+                <div class="card-value" th:text="${billStats.get('countDue')}">0</div>
                 <div class="card-sub" th:text="${'$' + #numbers.formatDecimal(billStats.get('remaining'), 1, 2)}">$0.00 remaining</div>
             </div>
         </div>
@@ -498,84 +555,88 @@
                     <a th:href="@{/bills/schedule(username=${user.getUsername()})}" class="view-all-link">View All →</a>
                 </div>
 
-                <div th:if="${currentMonthBills == null or #lists.isEmpty(currentMonthBills)}" class="empty-state">
-                    <p>No bills this month</p>
-                </div>
-
-                <div th:each="bill : ${currentMonthBills}"
-                     th:id="'bill-item-' + ${bill.getId()}"
-                     class="bill-item"
-                     th:classappend="${billsPaidStatus.get(bill.getId()) ? 'paid' : ''} +
-                                    ${overdueBills.contains(bill) ? ' overdue' : ''}">
-
-                    <div class="bill-check"
-                         th:onclick="'toggleBillPaid(' + ${bill.getId()} + ', ' + ${bill.getBillingMonth()} + ', ' + ${bill.getBillingYear()} + ')'">
-                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div class="bills-content">
+                    <div th:if="${currentMonthBills == null or #lists.isEmpty(currentMonthBills)}" class="empty-state">
+                        <p>No bills this month</p>
                     </div>
 
-                    <div class="bill-info">
-                        <div class="bill-name" th:text="${bill.getName()}">Bill Name</div>
-                        <div class="bill-due"
-                             th:classappend="${overdueBills.contains(bill) ? 'overdue' : ''}"
-                             th:text="${'Due: ' + bill.getDueDay() + 'th'}">Due: 1st</div>
-                    </div>
+                    <div th:each="bill : ${currentMonthBills}"
+                         th:id="'bill-item-' + ${bill.getId()}"
+                         class="bill-item"
+                         th:classappend="${billsPaidStatus.get(bill.getId()) ? 'paid' : ''} +
+                                        ${overdueBills.contains(bill) ? ' overdue' : ''}">
 
-                    <div class="bill-amount"
-                         th:text="${'$' + #numbers.formatDecimal(bill.getAmount(), 1, 2)}">$0.00</div>
+                        <div class="bill-check"
+                             th:onclick="'toggleBillPaid(' + ${bill.getId()} + ', ' + ${bill.getBillingMonth()} + ', ' + ${bill.getBillingYear()} + ')'">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+
+                        <div class="bill-info">
+                            <div class="bill-name" th:text="${bill.getName()}">Bill Name</div>
+                            <div class="bill-due"
+                                 th:classappend="${overdueBills.contains(bill) ? 'overdue' : ''}"
+                                 th:text="${'Due: ' + bill.getDueDay() + 'th'}">Due: 1st</div>
+                        </div>
+
+                        <div class="bill-amount"
+                             th:text="${'$' + #numbers.formatDecimal(bill.getAmount(), 1, 2)}">$0.00</div>
+                    </div>
                 </div>
             </div>
 
             <!-- CENTER: Accounts -->
-            <div class="accounts-panel" id="accountsContainer">
+            <div class="accounts-panel">
                 <div class="section-header">
                     <h2>My Accounts</h2>
                     <button class="add-btn" onclick="openAccountModal()">+ Add Account</button>
                 </div>
 
-                <div th:if="${accounts.isEmpty()}" class="empty-state">
-                    <p>No accounts yet</p>
-                </div>
+                <div class="accounts-content" id="accountsContainer">
+                    <div th:if="${accounts.isEmpty()}" class="empty-state">
+                        <p>No accounts yet</p>
+                    </div>
 
-                <div th:each="account : ${accounts}">
-                    <a th:href="@{/transaction/account/{id}(id=${account.getId()}, username=${user.getUsername()})}"
-                       class="account-card"
-                       th:data-account-id="${account.getId()}"
-                       draggable="true"
-                       ondragstart="handleDragStart(event)"
-                       ondragend="handleDragEnd(event)"
-                       ondragover="handleDragOver(event)"
-                       ondrop="handleDrop(event)">
+                    <div th:each="account : ${accounts}">
+                        <a th:href="@{/transaction/account/{id}(id=${account.getId()}, username=${user.getUsername()})}"
+                           class="account-card"
+                           th:data-account-id="${account.getId()}"
+                           draggable="true"
+                           ondragstart="handleDragStart(event)"
+                           ondragend="handleDragEnd(event)"
+                           ondragover="handleDragOver(event)"
+                           ondrop="handleDrop(event)">
 
-                        <div class="drag-handle">
-                            <svg viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
-                        </div>
+                            <div class="drag-handle">
+                                <svg viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+                            </div>
 
-                        <div class="acct-icon" th:text="${account.getName().substring(0,1).toUpperCase()}">A</div>
+                            <div class="acct-icon" th:text="${account.getName().substring(0,1).toUpperCase()}">A</div>
 
-                        <div class="acct-info">
-                            <div class="acct-name" th:text="${account.getName()}">Account Name</div>
-                            <div class="acct-date" th:text="${'Opened ' + #temporals.format(account.getOpeningDate(), 'MMM d, yyyy')}">Opened Jan 1, 2025</div>
-                        </div>
+                            <div class="acct-info">
+                                <div class="acct-name" th:text="${account.getName()}">Account Name</div>
+                                <div class="acct-date" th:text="${'Opened ' + #temporals.format(account.getOpeningDate(), 'MMM d, yyyy')}">Opened Jan 1, 2025</div>
+                            </div>
 
-                        <div th:if="${accountBalances.get(account.getId()).signum() > 0}"
-                             class="acct-balance positive"
-                             th:text="${'$' + #numbers.formatDecimal(accountBalances.get(account.getId()), 1, 2)}">$0.00</div>
-                        <div th:if="${accountBalances.get(account.getId()).signum() < 0}"
-                             class="acct-balance negative"
-                             th:text="${'-$' + #numbers.formatDecimal(accountBalances.get(account.getId()).abs(), 1, 2)}">$0.00</div>
-                        <div th:if="${accountBalances.get(account.getId()).signum() == 0}"
-                             class="acct-balance zero">$0.00</div>
+                            <div th:if="${accountBalances.get(account.getId()).signum() > 0}"
+                                 class="acct-balance positive"
+                                 th:text="${'$' + #numbers.formatDecimal(accountBalances.get(account.getId()), 1, 2)}">$0.00</div>
+                            <div th:if="${accountBalances.get(account.getId()).signum() < 0}"
+                                 class="acct-balance negative"
+                                 th:text="${'-$' + #numbers.formatDecimal(accountBalances.get(account.getId()).abs(), 1, 2)}">$0.00</div>
+                            <div th:if="${accountBalances.get(account.getId()).signum() == 0}"
+                                 class="acct-balance zero">$0.00</div>
 
-                        <div class="acct-actions" onclick="event.stopPropagation(); event.preventDefault();">
-                            <form th:action="@{/account/delete/{id}(id=${account.getId()})}" method="POST" style="margin:0;">
-                                <input type="hidden" name="username" th:value="${user.getUsername()}">
-                                <button type="submit" class="icon-btn"
-                                        onclick="event.stopPropagation(); return confirm('Remove this account?')">
-                                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                                </button>
-                            </form>
-                        </div>
-                    </a>
+                            <div class="acct-actions" onclick="event.stopPropagation(); event.preventDefault();">
+                                <form th:action="@{/account/delete/{id}(id=${account.getId()})}" method="POST" style="margin:0;">
+                                    <input type="hidden" name="username" th:value="${user.getUsername()}">
+                                    <button type="submit" class="icon-btn"
+                                            onclick="event.stopPropagation(); return confirm('Remove this account?')">
+                                        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -655,11 +716,9 @@
                     const billItem = document.getElementById(`bill-item-${billId}`);
                     if (billItem) {
                         if (data.paid) {
-                            // Mark as paid
                             billItem.classList.add('paid');
                             billItem.classList.remove('overdue');
                         } else {
-                            // Mark as unpaid
                             billItem.classList.remove('paid');
                         }
                     }
@@ -671,7 +730,6 @@
             });
     }
 
-
     function openAccountModal() {
         document.getElementById('accountModal').classList.add('active');
     }
@@ -680,7 +738,6 @@
         document.getElementById('accountModal').classList.remove('active');
     }
 
-    // Close modal on escape or outside click
     document.getElementById('accountModal').addEventListener('click', function(e) {
         if (e.target === this) closeAccountModal();
     });
@@ -688,7 +745,6 @@
         if (e.key === 'Escape') closeAccountModal();
     });
 
-    // Drag and drop handlers
     function handleDragStart(e) {
         draggedElement = e.currentTarget;
         e.currentTarget.classList.add('dragging');
@@ -698,7 +754,6 @@
 
     function handleDragEnd(e) {
         e.currentTarget.classList.remove('dragging');
-        // Save the new order
         saveAccountOrder();
     }
 
@@ -756,8 +811,6 @@
             }
         });
 
-        console.log('Saving order:', orderData);
-
         fetch('/account/reorder', {
             method: 'POST',
             headers: {
@@ -771,8 +824,6 @@
             })
             .catch(err => {
                 console.error('Failed to save order:', err);
-                alert('Failed to save account order. Refreshing page...');
-                location.reload();
             });
     }
 </script>
