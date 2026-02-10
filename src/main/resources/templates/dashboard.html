@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Franklin FinTrack</title>
+    <title>Dashboard - FinTrack</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -169,7 +169,7 @@
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 20px;
-            height: 500px;
+            height: 650px;
             display: flex;
             flex-direction: column;
         }
@@ -265,7 +265,7 @@
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 20px;
-            height: 500px;
+            height: 650px;
             display: flex;
             flex-direction: column;
         }
@@ -369,6 +369,135 @@
             font-family: 'Syne', sans-serif;
             font-size: 1.5rem;
             font-weight: 700;
+        }
+
+        /* NEW: Paycheck Tracker Panel */
+        .paycheck-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+        .paycheck-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .paycheck-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+        .paycheck-list {
+            margin-bottom: 16px;
+        }
+        .paycheck-item {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+        }
+        .paycheck-item:hover {
+            border-color: rgba(62,207,142,0.4);
+        }
+        .paycheck-date {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .paycheck-amount {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--green-main);
+        }
+        .paycheck-delete {
+            width: 24px; height: 24px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            margin-left: 10px;
+        }
+        .paycheck-delete:hover {
+            border-color: var(--red);
+            color: var(--red);
+        }
+        .paycheck-delete svg {
+            width: 12px;
+            height: 12px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+        }
+        .paycheck-total {
+            background: var(--green-dim);
+            border: 1px solid var(--green-main);
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+        }
+        .paycheck-total-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--green-main);
+            font-weight: 600;
+        }
+        .paycheck-total-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--green-main);
+        }
+        .paycheck-input-group {
+            display: flex;
+            gap: 8px;
+        }
+        .paycheck-input {
+            flex: 1;
+            padding: 10px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .paycheck-input:focus {
+            border-color: var(--green-main);
+        }
+        .paycheck-add-btn {
+            padding: 10px 16px;
+            background: var(--green-dim);
+            border: 1px solid var(--border);
+            color: var(--green-main);
+            border-radius: 9px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .paycheck-add-btn:hover {
+            background: var(--green-glow);
+            border-color: var(--green-main);
         }
 
         /* Empty states */
@@ -495,7 +624,7 @@
             <div class="logo-icon">
                 <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
             </div>
-            <div class="logo-text">Franklin Fin<span>Track</span></div>
+            <div class="logo-text">Finance<span>Track</span></div>
         </div>
         <div class="topbar-right">
             <div class="user-badge">
@@ -640,7 +769,7 @@
                 </div>
             </div>
 
-            <!-- RIGHT: Quick Stats -->
+            <!-- RIGHT: Quick Stats + Paycheck Tracker -->
             <div class="stats-panel">
                 <div class="stat-card">
                     <div class="stat-label">Total Due</div>
@@ -663,6 +792,31 @@
                 <div class="stat-card">
                     <div class="stat-label">Accounts</div>
                     <div class="stat-value" th:text="${accounts.size()}">0</div>
+                </div>
+
+                <!-- NEW: Monthly Income Tracker -->
+                <div class="paycheck-panel">
+                    <div class="paycheck-header">
+                        <div class="paycheck-title" th:text="${currentMonthName + ' Income'}">February Income</div>
+                    </div>
+
+                    <div class="paycheck-input-group">
+                        <input type="number"
+                               class="paycheck-input"
+                               id="paycheckAmount"
+                               placeholder="Amount"
+                               step="0.01">
+                        <button class="paycheck-add-btn" onclick="addPaycheck()">+ Add</button>
+                    </div>
+
+                    <div class="paycheck-list" id="paycheckList">
+                        <!-- Paychecks will be added here dynamically -->
+                    </div>
+
+                    <div class="paycheck-total">
+                        <span class="paycheck-total-label">Total Income</span>
+                        <span class="paycheck-total-value" id="totalIncome">$0.00</span>
+                    </div>
                 </div>
             </div>
 
@@ -705,6 +859,7 @@
 
 <script th:inline="javascript">
     let draggedElement = null;
+    let paychecks = [];
 
     function toggleBillPaid(billId, month, year) {
         fetch(`/bills/mark-paid/${billId}?month=${month}&year=${year}`, {
@@ -728,6 +883,58 @@
                 console.error('Error toggling bill:', err);
                 alert('Failed to update bill status.');
             });
+    }
+
+    // Paycheck functionality
+    function addPaycheck() {
+        const amountInput = document.getElementById('paycheckAmount');
+        const amount = parseFloat(amountInput.value);
+
+        if (!amount || amount <= 0) {
+            alert('Please enter a valid amount');
+            return;
+        }
+
+        const paycheck = {
+            id: Date.now(),
+            amount: amount,
+            date: new Date().toLocaleDateString()
+        };
+
+        paychecks.push(paycheck);
+        amountInput.value = '';
+        renderPaychecks();
+    }
+
+    function deletePaycheck(id) {
+        paychecks = paychecks.filter(p => p.id !== id);
+        renderPaychecks();
+    }
+
+    function renderPaychecks() {
+        const list = document.getElementById('paycheckList');
+        const totalEl = document.getElementById('totalIncome');
+
+        if (paychecks.length === 0) {
+            list.innerHTML = '';
+        } else {
+            list.innerHTML = paychecks.map(p => `
+                <div class="paycheck-item">
+                    <div>
+                        <div class="paycheck-date">${p.date}</div>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <div class="paycheck-amount">$${p.amount.toFixed(2)}</div>
+                        <button class="paycheck-delete" onclick="deletePaycheck(${p.id})">
+                            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        const total = paychecks.reduce((sum, p) => sum + p.amount, 0);
+        totalEl.textContent = '$' + total.toFixed(2);
     }
 
     function openAccountModal() {
@@ -825,6 +1032,45 @@
             .catch(err => {
                 console.error('Failed to save order:', err);
             });
+    }
+
+    // Load paychecks from localStorage on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        const saved = localStorage.getItem('paychecks');
+        if (saved) {
+            paychecks = JSON.parse(saved);
+            renderPaychecks();
+        }
+    });
+
+    // Save to localStorage whenever paychecks change
+    function renderPaychecks() {
+        const list = document.getElementById('paycheckList');
+        const totalEl = document.getElementById('totalIncome');
+
+        if (paychecks.length === 0) {
+            list.innerHTML = '';
+        } else {
+            list.innerHTML = paychecks.map(p => `
+                <div class="paycheck-item">
+                    <div>
+                        <div class="paycheck-date">${p.date}</div>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <div class="paycheck-amount">$${p.amount.toFixed(2)}</div>
+                        <button class="paycheck-delete" onclick="deletePaycheck(${p.id})">
+                            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        const total = paychecks.reduce((sum, p) => sum + p.amount, 0);
+        totalEl.textContent = '$' + total.toFixed(2);
+
+        // Save to localStorage
+        localStorage.setItem('paychecks', JSON.stringify(paychecks));
     }
 </script>
 
