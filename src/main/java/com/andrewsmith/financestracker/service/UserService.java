@@ -4,6 +4,7 @@ import com.andrewsmith.financestracker.model.Account;
 import com.andrewsmith.financestracker.model.User;
 import com.andrewsmith.financestracker.repository.AccountRepository;
 import com.andrewsmith.financestracker.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,9 +24,7 @@ public class UserService {
         this.accountRepository = accountRepository;
     }
 
-    /**
-     * Register a new user with encrypted password
-     */
+    // Register a new user with encrypted password
     public User registerUser(String username, String password, String email) {
         // Check if username already exists
         if (userRepository.findByUsername(username).isPresent()) {
@@ -46,9 +45,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    /**
-     * Authenticate user (for manual login - Spring Security handles this automatically)
-     */
+    // Authenticate user (for manual login - Spring Security handles this automatically)
     public boolean authenticateUser(String username, String rawPassword) {
         Optional<User> userOpt = userRepository.findByUsername(username);
 
@@ -61,38 +58,30 @@ public class UserService {
         return passwordEncoder.matches(rawPassword, user.getPassword());
     }
 
-    /**
-     * Get user by username
-     */
+    // Get user by username
     public Optional<User> getUserByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 
-    /**
-     * Get user by email
-     */
+    // Get user by email
     public Optional<User> getUserByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
-    /**
-     * Update user password (with encryption)
-     */
+    @Transactional
+    // Update user password (with encryption)
     public void updatePassword(User user, String newPassword) {
-        user.setPassword(passwordEncoder.encode(newPassword));
+        String encryptedPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(encryptedPassword);
         userRepository.save(user);
     }
 
-    /**
-     * Check if username is available
-     */
+    // Check if username is available
     public boolean isUsernameAvailable(String username) {
         return userRepository.findByUsername(username).isEmpty();
     }
 
-    /**
-     * Check if email is available
-     */
+    // Check if email is available
     public boolean isEmailAvailable(String email) {
         return userRepository.findByEmail(email).isEmpty();
     }
