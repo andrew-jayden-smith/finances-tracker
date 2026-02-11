@@ -170,7 +170,7 @@ public class BillService {
             }
         }
     }
-    // Delete payement to mark back to DUE
+    // Delete payment to mark back to DUE
     public void deletePaymentForMonth(Bill bill, int month, int year) {
         try {
             Optional<BillPayment> payment = billPaymentRepository.findByBillAndMonthYear(bill, month, year);

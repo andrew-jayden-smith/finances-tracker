@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
     <title>Bills Schedule - FinTrack</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
@@ -548,6 +552,7 @@
             <div class="week-header">Week 1 • Days 1-7</div>
 
             <div th:each="bill : ${billsByWeek.get(1)}"
+                 th:id="'bill-row-' + ${bill.getId()}"
                  class="bill-row"
                  th:classappend="${paidStatus.get(bill.getId()) ? 'paid' : ''} +
                                 ${overdueBills.contains(bill.getId()) ? ' overdue' : ''}">
@@ -597,6 +602,7 @@
             <div class="week-header">Week 2 • Days 8-14</div>
 
             <div th:each="bill : ${billsByWeek.get(2)}"
+                 th:id="'bill-row-' + ${bill.getId()}"
                  class="bill-row"
                  th:classappend="${paidStatus.get(bill.getId()) ? 'paid' : ''} +
                                 ${overdueBills.contains(bill.getId()) ? ' overdue' : ''}">
@@ -646,6 +652,7 @@
             <div class="week-header">Week 3 • Days 15-21</div>
 
             <div th:each="bill : ${billsByWeek.get(3)}"
+                 th:id="'bill-row-' + ${bill.getId()}"
                  class="bill-row"
                  th:classappend="${paidStatus.get(bill.getId()) ? 'paid' : ''} +
                                 ${overdueBills.contains(bill.getId()) ? ' overdue' : ''}">
@@ -695,6 +702,7 @@
             <div class="week-header">Week 4 • Days 22-28</div>
 
             <div th:each="bill : ${billsByWeek.get(4)}"
+                 th:id="'bill-row-' + ${bill.getId()}"
                  class="bill-row"
                  th:classappend="${paidStatus.get(bill.getId()) ? 'paid' : ''} +
                                 ${overdueBills.contains(bill.getId()) ? ' overdue' : ''}">
@@ -884,16 +892,35 @@
     });
 
     function toggleBillPaid(billId, month, year) {
+        const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        const headers = {};
+        headers[header] = token;
+
         fetch(`/bills/mark-paid/${billId}?month=${month}&year=${year}`, {
-            method: 'POST'
+            method: 'POST',
+            headers: headers
         })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    location.reload();
+                    // Changed from bill-item to bill-row
+                    const billItem = document.getElementById(`bill-row-${billId}`);
+                    if (billItem) {
+                        if (data.paid) {
+                            billItem.classList.add('paid');
+                            billItem.classList.remove('overdue');
+                        } else {
+                            billItem.classList.remove('paid');
+                        }
+                    }
                 }
             })
-            .catch(err => console.error('Error:', err));
+            .catch(err => {
+                console.error('Error toggling bill:', err);
+                alert('Failed to update bill status.');
+            });
     }
 </script>
 

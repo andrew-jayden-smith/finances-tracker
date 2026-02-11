@@ -4,6 +4,7 @@ import com.andrewsmith.financestracker.model.Account;
 import com.andrewsmith.financestracker.model.User;
 import com.andrewsmith.financestracker.repository.AccountRepository;
 import com.andrewsmith.financestracker.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,47 +12,93 @@ import java.util.Optional;
 
 @Service
 public class UserService {
-    // Inject the UserRepository
+
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
     private final AccountRepository accountRepository;
 
-    public UserService(UserRepository userRepository, AccountRepository accountRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AccountRepository accountRepository) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
         this.accountRepository = accountRepository;
     }
 
-    // Get user by username
-    public Optional<User> getUserByUsername(String username) {
-        return Optional.ofNullable(userRepository.findByUsername(username));
-    }
+    /**
+     * Register a new user with encrypted password
+     */
+    public User registerUser(String username, String password, String email) {
+        // Check if username already exists
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new IllegalArgumentException("Username already exists");
+        }
 
-    // Get user by email
-    public Optional<User> getUserByEmail(String email) {
-        return Optional.ofNullable(userRepository.findByEmail(email));
-    }
+        // Check if email already exists
+        if (email != null && !email.isEmpty() && userRepository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("Email already exists");
+        }
 
-    // Check if user exists by username
-    public boolean userExists(String username) {
-        return userRepository.existsByUsername(username);
-    }
+        // Create new user with encrypted password
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(password));  // ✅ ENCRYPT PASSWORD
+        user.setEmail(email);
 
-    // Check if a user exists by email
-    public boolean emailExists(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    // Create new user and save it to the UserRepository
-    public User createUser(User user) {
         return userRepository.save(user);
+    }
+
+    /**
+     * Authenticate user (for manual login - Spring Security handles this automatically)
+     */
+    public boolean authenticateUser(String username, String rawPassword) {
+        Optional<User> userOpt = userRepository.findByUsername(username);
+
+        if (userOpt.isEmpty()) {
+            return false;
+        }
+
+        User user = userOpt.get();
+        // Check if password matches using BCrypt
+        return passwordEncoder.matches(rawPassword, user.getPassword());
+    }
+
+    /**
+     * Get user by username
+     */
+    public Optional<User> getUserByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
+    /**
+     * Get user by email
+     */
+    public Optional<User> getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    /**
+     * Update user password (with encryption)
+     */
+    public void updatePassword(User user, String newPassword) {
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    /**
+     * Check if username is available
+     */
+    public boolean isUsernameAvailable(String username) {
+        return userRepository.findByUsername(username).isEmpty();
+    }
+
+    /**
+     * Check if email is available
+     */
+    public boolean isEmailAvailable(String email) {
+        return userRepository.findByEmail(email).isEmpty();
     }
 
     // Find all accounts for a user
     public List<Account> getUserAccounts(User user) {
         return accountRepository.findAllByUser(user);
-    }
-
-    // Check if a specific account exists for a user
-    public boolean accountExists(User user, String accountName) {
-        return accountRepository.existsByUserAndName(user, accountName);
     }
 }
