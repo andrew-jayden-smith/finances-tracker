@@ -32,10 +32,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Allow landing page and all auth pages
                         .requestMatchers(
-                                "/",                    // Landing page
-                                "/user/login",          // Login page
-                                "/user/signup",         // Signup page
-                                "/user/register"        // Registration endpoint
+                                "/",                     // Landing page
+                                "/user/login",           // Login page
+                                "/user/signup",          // Signup page
+                                "/user/register",        // Registration endpoint
+                                "/user/forgot-password", // Forgot password page/form
+                                "/user/reset-password"   // Reset password page/form
                         ).permitAll()
 
                         // Static resources
