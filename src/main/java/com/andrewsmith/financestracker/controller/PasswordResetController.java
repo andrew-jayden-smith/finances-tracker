@@ -30,12 +30,50 @@ public class PasswordResetController {
     }
 
     // Get client IP
-    public String getClientIP(HttpServletRequest request) {
+    /**
+     * Get the real client IP address (works in development and production)
+     *
+     * In production (Render, AWS, etc.), requests go through a reverse proxy.
+     * The real client IP is in the X-Forwarded-For header.
+     */
+    private String getClientIP(HttpServletRequest request) {
+        // Try X-Forwarded-For header first (used by reverse proxies)
         String xfHeader = request.getHeader("X-Forwarded-For");
-        if (xfHeader == null) {
-            return request.getRemoteAddr();
+        if (xfHeader != null && !xfHeader.isEmpty() && !"unknown".equalsIgnoreCase(xfHeader)) {
+            // X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
+            // The first one is the real client IP
+            String clientIP = xfHeader.split(",")[0].trim();
+
+            // Validate it's not a local/private IP in production
+            if (!clientIP.equals("0:0:0:0:0:0:0:1") && !clientIP.equals("127.0.0.1")) {
+                return clientIP;
+            }
         }
-        return xfHeader.split(",")[0];
+
+        // Try other common headers used by various proxies/load balancers
+        String[] headerNames = {
+                "X-Real-IP",           // Nginx
+                "CF-Connecting-IP",    // Cloudflare
+                "True-Client-IP",      // Akamai, Cloudflare Enterprise
+                "X-Client-IP"          // Apache
+        };
+
+        for (String headerName : headerNames) {
+            String ip = request.getHeader(headerName);
+            if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+                return ip.trim();
+            }
+        }
+
+        // Fallback to remote address (works in development)
+        String remoteAddr = request.getRemoteAddr();
+
+        // Convert IPv6 localhost to IPv4 for consistency
+        if ("0:0:0:0:0:0:0:1".equals(remoteAddr)) {
+            return "127.0.0.1";
+        }
+
+        return remoteAddr;
     }
 
     // Show forgot password form
