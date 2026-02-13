@@ -105,7 +105,7 @@ public class PasswordResetController {
 
         // Always show successful, so it does not reveal if email exists or not
         if (userOptional.isEmpty()) {
-            model.addAttribute("Success", "If an account exists with that email, a password reset link has been sent.");
+            model.addAttribute("success", "If an account exists with that email, a password reset link has been sent.");
             return "forgot-password";
         }
 
@@ -170,7 +170,7 @@ public class PasswordResetController {
         if (!password.equals(confirmPassword)) {
             model.addAttribute("error", "Passwords do not match.");
             model.addAttribute("token", token);
-            return "reset-password-error";
+            return "reset-password";
         }
 
         // Validate password strength
