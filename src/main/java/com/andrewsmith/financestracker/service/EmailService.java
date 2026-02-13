@@ -9,12 +9,20 @@ import org.springframework.stereotype.Service;
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final String fromEmail;
 
-    @Value("${spring.mail.username}")
-    private String fromEmail;
+    // @Value("${spring.mail.username}")
+    // private String fromEmail;
 
-    public EmailService(JavaMailSender mailSender) {
+    public EmailService(JavaMailSender mailSender, @Value("${spring.mail.username}") String fromEmail) {
         this.mailSender = mailSender;
+        this.fromEmail = fromEmail;
+
+        // Debug: Check if environment variables are loaded
+        System.out.println("=== EMAIL CONFIG DEBUG ===");
+        System.out.println("MAIL_USERNAME env: " + System.getenv("MAIL_USERNAME"));
+        System.out.println("MAIL_PASSWORD set: " + (System.getenv("MAIL_PASSWORD") != null ? "Yes" : "No"));
+        System.out.println("From email: " + fromEmail);
     }
 
     // Send an Email
