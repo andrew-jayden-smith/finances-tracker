@@ -1,10 +1,13 @@
 package com.andrewsmith.financestracker.controller;
 
 import com.andrewsmith.financestracker.model.*;
+import com.andrewsmith.financestracker.security.SecurityConfig;
 import com.andrewsmith.financestracker.service.AccountService;
 import com.andrewsmith.financestracker.service.BillService;
 import com.andrewsmith.financestracker.service.TransactionService;
 import com.andrewsmith.financestracker.service.UserService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +34,10 @@ public class AccountController {
     }
 
     @GetMapping("/dashboard")
-    public String showDashboard(@RequestParam String username, Model model) {
+    public String showDashboard(Model model) {
+        // Get username from Spring security
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
 
         User user = userService.getUserByUsername(username).orElse(null);
         if (user == null) {
@@ -117,7 +123,11 @@ public class AccountController {
     }
 
     @GetMapping("/create")
-    public String showCreateAccountForm(@RequestParam String username, Model model) {
+    public String showCreateAccountForm(Model model) {
+        // Get username from Spring security
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
         User user = userService.getUserByUsername(username).orElse(null);
         if (user == null) {
             model.addAttribute("error", "User not found");
@@ -129,7 +139,11 @@ public class AccountController {
     }
 
     @PostMapping("/create")
-    public String createAccount(@ModelAttribute Account account, @RequestParam String username, Model model) {
+    public String createAccount(@ModelAttribute Account account, Model model) {
+        // Get username from Spring security
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
         User user = userService.getUserByUsername(username).orElse(null);
         if (user == null) {
             model.addAttribute("error", "User not found");
@@ -138,13 +152,17 @@ public class AccountController {
         account.setUser(user);
         account.setOpeningDate(LocalDateTime.now());
         accountService.createAccount(account);
-        return "redirect:/account/dashboard?username=" + username;
+        return "redirect:/account/dashboard";
     }
 
     @PostMapping("/delete/{accountId}")
-    public String deleteAccount(@PathVariable Long accountId, @RequestParam String username) {
+    public String deleteAccount(@PathVariable Long accountId) {
+        // Get username from spring security
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
         accountService.deleteAccount(accountId);
-        return "redirect:/account/dashboard?username=" + username;
+        return "redirect:/account/dashboard";
     }
 
     // Reorder endpoint for drag-and-drop
