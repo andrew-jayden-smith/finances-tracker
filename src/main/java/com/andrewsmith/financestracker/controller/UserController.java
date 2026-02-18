@@ -58,12 +58,17 @@ public class UserController {
      * Handle user registration
      */
     @PostMapping("/register")
-    public String registerUser(@RequestParam String username,
-                               @RequestParam String password,
+    public String registerUser(@RequestParam String password,
                                @RequestParam(required = false) String email,
                                HttpServletRequest request,
                                HttpServletResponse response,
                                Model model) {
+
+        // Get username from Spring security
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
+
         try {
             // Validate input
             if (username == null || username.trim().isEmpty()) {
@@ -83,7 +88,7 @@ public class UserController {
             authenticateUser(user, password, request, response);
 
             // Redirect to dashboard
-            return "redirect:/account/dashboard?username=" + username;
+            return "redirect:/account/dashboard";
 
         } catch (IllegalArgumentException e) {
             model.addAttribute("error", e.getMessage());
