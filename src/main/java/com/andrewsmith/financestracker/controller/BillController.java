@@ -2,6 +2,8 @@ package com.andrewsmith.financestracker.controller;
 
 import com.andrewsmith.financestracker.model.*;
 import com.andrewsmith.financestracker.repository.CategoryRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import com.andrewsmith.financestracker.repository.MerchantRepository;
 import com.andrewsmith.financestracker.service.AccountService;
@@ -40,7 +42,11 @@ public class BillController {
     // Schedule view for calendar
     // Get mapping for route and view method with request parameters and constructors
     @GetMapping("/schedule")
-    public String viewSchedule(@RequestParam String username, @RequestParam(required = false) Integer month, @RequestParam(required = false) Integer year, Model model) {
+    public String viewSchedule(@RequestParam(required = false) Integer month, @RequestParam(required = false) Integer year, Model model) {
+        // Get username from Spring security
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
         // Verify user
         User user = userService.getUserByUsername(username).orElse(null);
         if (user == null) {
@@ -118,14 +124,17 @@ public class BillController {
     }//1'1
     // Post mapping for create bill
     @PostMapping("/create")
-    public String createBill(@RequestParam String username,
-                             @RequestParam String name,
+    public String createBill(@RequestParam String name,
                              @RequestParam BigDecimal amount,
                              @RequestParam int dueDay,
                              @RequestParam int billingMonth,
                              @RequestParam int billingYear,
                              @RequestParam String frequency,
                              @RequestParam(required = false) String categoryName, Model model) {
+
+        // Get username from Spring security
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
 
         User user = userService.getUserByUsername(username).orElse(null);
         if (user == null) {
@@ -148,13 +157,12 @@ public class BillController {
         }
         billService.createBill(bill);
 
-        return "redirect:/bills/schedule?username=" + username + "&month=" + billingMonth + "&year=" + billingYear;
+        return "redirect:/bills/schedule?month=" + billingMonth + "&year=" + billingYear;
     }
 
     // Post mapping for handling update bill
     @PostMapping("/update/{id}")
     public String updateBill(@PathVariable Long id,
-                             @RequestParam String username,
                              @RequestParam String name,
                              @RequestParam BigDecimal amount,
                              @RequestParam int dueDay,
@@ -163,11 +171,15 @@ public class BillController {
                              @RequestParam String frequency,
                              @RequestParam(required = false) String categoryName) {
 
+        // Get username from Spring security
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
         // Find the bill by its id
         Bill bill = billService.getBillById(id).orElse(null);
         if (bill == null) {
             // If the bill is null redirect to the users dashboard
-            return "redirect:/bills/schedule?username=" + username;
+            return "redirect:/bills/schedule";
         }
         bill.setName(name);
         bill.setAmount(amount);
@@ -187,19 +199,23 @@ public class BillController {
         }
         billService.updateBill(bill);
 
-        return "redirect:/bills/schedule?username=" + username + "&month=" + billingMonth + "&year=" + billingYear;
+        return "redirect:/bills/schedule?month=" + billingMonth + "&year=" + billingYear;
     }
 
     // Post map delete a bill
     @PostMapping("/delete/{id}")
-    public String deleteBill(@PathVariable Long id, @RequestParam String username, @RequestParam Integer month, @RequestParam Integer year) {
+    public String deleteBill(@PathVariable Long id, @RequestParam Integer month, @RequestParam Integer year) {
+        // Get username from Spring security
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
         // Find the bill
         Bill bill = billService.getBillById(id).orElse(null);
         // If the bill is not null (it exists)
         if (bill != null) {
             billService.deleteBill(bill);
         }
-        return "redirect:/bills/schedule?username=" + username + "&month=" + month + "&year=" + year;
+        return "redirect:/bills/schedule?month=" + month + "&year=" + year;
     }
 
     @PostMapping("/mark-paid/{id}")
@@ -244,11 +260,15 @@ public class BillController {
 
     // Generate monthly bills
     @PostMapping("/generate-month")
-    public String generateMonthlyBills(@RequestParam String username, @RequestParam Integer month, @RequestParam Integer year) {
+    public String generateMonthlyBills(@RequestParam Integer month, @RequestParam Integer year) {
+        // Get username from Spring security
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
         User user = userService.getUserByUsername(username).orElse(null);
         if (user != null) {
             billService.generateMonthlyBills(user, month, year);
         }
-        return "redirect:/bills/schedule?username=" + username + "&month=" + month + "&year=" + year;
+        return "redirect:/bills/schedule?month=" + month + "&year=" + year;
     }
 }
