@@ -698,7 +698,7 @@
             <div class="bills-panel">
                 <div class="bills-header">
                     <div class="bills-month" th:text="${currentMonthName + ' Bills'}">February Bills</div>
-                    <a th:href="@{/bills/schedule(username=${user.getUsername()})}" class="view-all-link">View All →</a>
+                    <a th:href="@{/bills/schedule}" class="view-all-link">View All →</a>
                 </div>
 
                 <div class="bills-content">
@@ -743,7 +743,7 @@
                     </div>
 
                     <div th:each="account : ${accounts}">
-                        <a th:href="@{/transaction/account/{id}(id=${account.getId()}, username=${user.getUsername()})}"
+                        <a th:href="@{/transaction/account/{id}(id=${account.getId()})}"
                            class="account-card"
                            th:data-account-id="${account.getId()}"
                            draggable="true"
@@ -774,7 +774,6 @@
 
                             <div class="acct-actions" onclick="event.stopPropagation(); event.preventDefault();">
                                 <form th:action="@{/account/delete/{id}(id=${account.getId()})}" method="POST" style="margin:0;">
-                                    <input type="hidden" name="username" th:value="${user.getUsername()}">
                                     <button type="submit" class="icon-btn"
                                             onclick="event.stopPropagation(); return confirm('Remove this account?')">
                                         <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -853,7 +852,6 @@
         <p class="modal-sub">Create a new account to track</p>
 
         <form th:action="@{/account/create}" method="POST">
-            <input type="hidden" name="username" th:value="${user.getUsername()}">
 
             <div class="m-field">
                 <label>Account Name</label>

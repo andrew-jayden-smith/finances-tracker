@@ -166,7 +166,7 @@ public class AccountController {
         // ✅ Verify account belongs to this user
         Account account = accountService.getAccountById(accountId).orElse(null);
         if (account == null || !account.getUser().equals(user)) {
-            return "redirect:/account/dashboard";  // ✅ Prevent unauthorized delete
+            return "redirect:/account/dashboard";  // Prevent unauthorized delete
         }
 
         accountService.deleteAccount(accountId);

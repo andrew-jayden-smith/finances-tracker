@@ -22,7 +22,7 @@ public class SecurityConfig {
     public AuthenticationSuccessHandler customAuthenticationSuccessHandler() {
         return (request, response, authentication) -> {
             String username = authentication.getName();
-            response.sendRedirect("/account/dashboard?username=" + username);
+            response.sendRedirect("/account/dashboard");
         };
     }
 
