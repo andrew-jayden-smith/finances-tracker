@@ -3,6 +3,8 @@ package com.andrewsmith.financestracker.controller;
 import com.andrewsmith.financestracker.model.*;
 import com.andrewsmith.financestracker.repository.CategoryRepository;
 import com.andrewsmith.financestracker.repository.MerchantRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import com.andrewsmith.financestracker.service.AccountService;
 import com.andrewsmith.financestracker.service.TransactionService;
@@ -37,12 +39,15 @@ public class TransactionController {
     @GetMapping("/account/{accountId}")
     public String viewTransactions(
             @PathVariable Long accountId,
-            @RequestParam String username,
             @RequestParam(required = false) String filter,
             @RequestParam(required = false) String filterValue,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month,
             Model model) {
+
+        // Get username from Spring security
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
 
         // 1️⃣ Verify user
         User user = userService.getUserByUsername(username).orElse(null);
@@ -51,7 +56,7 @@ public class TransactionController {
         // 2️⃣ Verify account
         Account account = accountService.getAccountById(accountId).orElse(null);
         if (account == null || !account.getUser().equals(user))
-            return "redirect:/account/dashboard?username=" + username;
+            return "redirect:/account/dashboard";
 
         // 1️⃣ Determine default year/month
         LocalDateTime now = LocalDateTime.now();
@@ -146,7 +151,11 @@ public class TransactionController {
 
 
     @PostMapping("/create")
-    public String createTransaction(@RequestParam Long accountId, @RequestParam String username, @RequestParam BigDecimal amount, @RequestParam(defaultValue = "") String description, @RequestParam String categoryName, @RequestParam String merchantName, Model model) {
+    public String createTransaction(@RequestParam Long accountId, @RequestParam BigDecimal amount, @RequestParam(defaultValue = "") String description, @RequestParam String categoryName, @RequestParam String merchantName, Model model) {
+        // Get username from Spring security
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
         // If user is not there or null
         User user = userService.getUserByUsername(username).orElse(null);
         if (user == null) {
@@ -157,7 +166,7 @@ public class TransactionController {
         Account account = accountService.getAccountById(accountId).orElse(null);
         if (accountId == null) {
             model.addAttribute("error", "Account not found");
-            return "redirect:/account/dashboard?username=" + username;
+            return "redirect:/account/dashboard";
         }
 
         // Find/Create Merchant and Category
@@ -185,16 +194,20 @@ public class TransactionController {
         transaction.setAccount(account);
         transactionService.createTransaction(transaction);
 
-        return "redirect:/transaction/account/" + accountId + "?username=" + username;
+        return "redirect:/transaction/account/" + accountId;
     }
 
     // Delete transaction
     @PostMapping("/delete/{transactionId}")
-    public String deleteTransaction(@PathVariable Long transactionId, @RequestParam Long accountId, @RequestParam String username) {
+    public String deleteTransaction(@PathVariable Long transactionId, @RequestParam Long accountId) {
+        // Get username from Spring security
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
         Transaction transaction = transactionService.getTransactionById(transactionId).orElse(null);
         if (transaction != null) {
             transactionService.deleteTransaction(transaction);
         }
-        return "redirect:/transaction/account/" + accountId + "?username=" + username;
+        return "redirect:/transaction/account/" + accountId;
     }
 }
