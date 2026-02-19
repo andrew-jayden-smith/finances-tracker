@@ -157,9 +157,17 @@ public class AccountController {
 
     @PostMapping("/delete/{accountId}")
     public String deleteAccount(@PathVariable Long accountId) {
-        // Get username from spring security
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
+
+        User user = userService.getUserByUsername(username).orElse(null);
+        if (user == null) return "redirect:/user/login";
+
+        // ✅ Verify account belongs to this user
+        Account account = accountService.getAccountById(accountId).orElse(null);
+        if (account == null || !account.getUser().equals(user)) {
+            return "redirect:/account/dashboard";  // ✅ Prevent unauthorized delete
+        }
 
         accountService.deleteAccount(accountId);
         return "redirect:/account/dashboard";
