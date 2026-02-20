@@ -4,9 +4,9 @@ import com.andrewsmith.financestracker.model.*;
 import com.andrewsmith.financestracker.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class TransactionService {
@@ -76,6 +76,66 @@ public class TransactionService {
 
     public List<Transaction> getTransactionsByAccountAndMerchantAndDateDesc(Account account, Merchant merchant, LocalDateTime start, LocalDateTime end) {
         return transactionRepository.findByAccountAndMerchantAndDateBetweenOrderByDateDesc(account, merchant, start, end);
+    }
+
+    /**
+     * Get category summary for an account within a date range
+     * Returns a map of category name → total amount spent
+     */
+    public Map<String, BigDecimal> getCategorySummary(Account account, LocalDateTime startDate, LocalDateTime endDate) {
+        List<Transaction> transactions;
+
+        if (startDate != null && endDate != null) {
+            transactions = transactionRepository.findByAccountAndDateBetweenOrderByDateDesc(
+                    account, startDate, endDate
+            );
+        } else {
+            transactions = transactionRepository.findAllByAccount(account);
+        }
+
+        // Group transactions by category and sum amounts
+        Map<String, BigDecimal> categorySummary = new HashMap<>();
+
+        for (Transaction t : transactions) {
+            String categoryName = (t.getCategory() != null)
+                    ? t.getCategory().getName()
+                    : "Uncategorized";
+
+            BigDecimal currentTotal = categorySummary.getOrDefault(categoryName, BigDecimal.ZERO);
+            categorySummary.put(categoryName, currentTotal.add(t.getAmount()));
+        }
+
+        return categorySummary;
+    }
+
+    /**
+     * Get category summary for expenses only (negative amounts)
+     */
+    public Map<String, BigDecimal> getExpenseCategorySummary(Account account, LocalDateTime startDate, LocalDateTime endDate) {
+        Map<String, BigDecimal> allCategories = getCategorySummary(account, startDate, endDate);
+
+        // Filter to only include expenses (negative amounts)
+        Map<String, BigDecimal> expenseCategories = new HashMap<>();
+        for (Map.Entry<String, BigDecimal> entry : allCategories.entrySet()) {
+            if (entry.getValue().signum() < 0) {  // Negative = expense
+                expenseCategories.put(entry.getKey(), entry.getValue().abs());  // Store as positive for display
+            }
+        }
+
+        return expenseCategories;
+    }
+
+    /**
+     * Get sorted category summary (by amount, descending)
+     */
+    public List<Map.Entry<String, BigDecimal>> getSortedCategorySummary(Account account, LocalDateTime startDate, LocalDateTime endDate) {
+        Map<String, BigDecimal> summary = getExpenseCategorySummary(account, startDate, endDate);
+
+        // Convert to list and sort by amount (descending)
+        List<Map.Entry<String, BigDecimal>> sortedList = new ArrayList<>(summary.entrySet());
+        sortedList.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
+        return sortedList;
     }
 
 

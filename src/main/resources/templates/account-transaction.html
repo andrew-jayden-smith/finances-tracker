@@ -260,6 +260,112 @@
         }
 
 
+        /* Category Summary Card */
+        .category-summary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .summary-header h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .summary-total {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .summary-total span {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--red);
+            margin-left: 6px;
+        }
+
+        .category-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .category-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .category-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-width: 280px;
+        }
+
+        .category-name {
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .category-amount {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .category-bar-bg {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-input);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .category-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green-main), #4fe8a0);
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+
+        .category-percent {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--green-main);
+            min-width: 45px;
+            text-align: right;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .category-item {
+                grid-template-columns: 1fr;
+            }
+
+            .category-info {
+                min-width: auto;
+            }
+        }
+
+
 
     </style>
 </head>
@@ -289,6 +395,34 @@
              th:text="${'$' + #numbers.formatDecimal(currentBalance, 1, 2)}">$0.00</div>
         <div th:if="${currentBalance.signum() < 0}" class="account-balance negative"
              th:text="${'-$' + #numbers.formatDecimal(currentBalance.abs(), 1, 2)}">$0.00</div>
+    </div>
+
+    <!-- ✅ NEW - Category Summary Card -->
+    <div class="category-summary-card" th:if="${!categorySummary.isEmpty()}">
+        <div class="summary-header">
+            <h3>Spending by Category</h3>
+            <div class="summary-total">
+                Total: <span th:text="${'$' + #numbers.formatDecimal(totalExpenses, 1, 2)}">$0.00</span>
+            </div>
+        </div>
+
+        <div class="category-list">
+            <div class="category-item" th:each="entry : ${categorySummary}">
+                <div class="category-info">
+                    <div class="category-name" th:text="${entry.getKey()}">Category</div>
+                    <div class="category-amount" th:text="${'$' + #numbers.formatDecimal(entry.getValue(), 1, 2)}">$0.00</div>
+                </div>
+                <div class="category-bar-bg">
+                    <div class="category-bar"
+                         th:style="'width: ' + ${entry.value.doubleValue() / totalExpenses.doubleValue() * 100.0} + '%;'">
+                    </div>
+                </div>
+                <div class="category-percent"
+                     th:text="${#numbers.formatDecimal(entry.value.doubleValue() / totalExpenses.doubleValue() * 100.0, 0, 0)} + '%'">
+                    0%
+                </div>
+            </div>
+        </div>
     </div>
 
 

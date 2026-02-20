@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/transaction")
@@ -128,6 +129,35 @@ public class TransactionController {
             currentBalance = currentBalance.add(t.getAmount());
         }
 
+        // ✅ ADD THIS - Calculate category summary for current filter
+        LocalDateTime summaryStartDate;
+        LocalDateTime summaryEndDate;
+
+        if ("date".equals(filter) && month != null) {
+            // Use selected month
+            summaryStartDate = LocalDateTime.of(filterYearValue, month, 1, 0, 0);
+            summaryEndDate = summaryStartDate.plusMonths(1).minusNanos(1);
+        } else if ("date".equals(filter) && "all".equals(filterValue)) {
+            // All time
+            summaryStartDate = null;
+            summaryEndDate = null;
+        } else {
+            // Default to current month
+            summaryStartDate = LocalDateTime.of(filterYearValue, filterMonthValueSafe, 1, 0, 0);
+            summaryEndDate = summaryStartDate.plusMonths(1).minusNanos(1);
+        }
+
+// Get category summary
+        List<Map.Entry<String, BigDecimal>> categorySummary =
+                transactionService.getSortedCategorySummary(account, summaryStartDate, summaryEndDate);
+
+// Calculate total expenses
+        BigDecimal totalExpenses = categorySummary.stream()
+                .map(Map.Entry::getValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        model.addAttribute("categorySummary", categorySummary);
+        model.addAttribute("totalExpenses", totalExpenses);
         // 6️⃣ Model attributes
         model.addAttribute("user", user);
         model.addAttribute("account", account);
