@@ -78,11 +78,19 @@ public class TransactionService {
         return transactionRepository.findByAccountAndMerchantAndDateBetweenOrderByDateDesc(account, merchant, start, end);
     }
 
+    // ============================================
+// ADD/REPLACE THESE METHODS IN TransactionService.java
+// ============================================
+
     /**
-     * Get category summary for an account within a date range
-     * Returns a map of category name → total amount spent
+     * Get comprehensive spending summary with income and expenses separated
+     * Returns a map containing:
+     * - "expenses": Map<String, BigDecimal> of expense categories
+     * - "income": Map<String, BigDecimal> of income categories
+     * - "totalExpenses": BigDecimal
+     * - "totalIncome": BigDecimal
      */
-    public Map<String, BigDecimal> getCategorySummary(Account account, LocalDateTime startDate, LocalDateTime endDate) {
+    public Map<String, Object> getComprehensiveSpendingSummary(Account account, LocalDateTime startDate, LocalDateTime endDate) {
         List<Transaction> transactions;
 
         if (startDate != null && endDate != null) {
@@ -93,50 +101,52 @@ public class TransactionService {
             transactions = transactionRepository.findAllByAccount(account);
         }
 
-        // Group transactions by category and sum amounts
-        Map<String, BigDecimal> categorySummary = new HashMap<>();
+        Map<String, BigDecimal> expenseCategories = new HashMap<>();
+        Map<String, BigDecimal> incomeCategories = new HashMap<>();
+        BigDecimal totalExpenses = BigDecimal.ZERO;
+        BigDecimal totalIncome = BigDecimal.ZERO;
 
         for (Transaction t : transactions) {
             String categoryName = (t.getCategory() != null)
                     ? t.getCategory().getName()
                     : "Uncategorized";
 
-            BigDecimal currentTotal = categorySummary.getOrDefault(categoryName, BigDecimal.ZERO);
-            categorySummary.put(categoryName, currentTotal.add(t.getAmount()));
-        }
-
-        return categorySummary;
-    }
-
-    /**
-     * Get category summary for expenses only (negative amounts)
-     */
-    public Map<String, BigDecimal> getExpenseCategorySummary(Account account, LocalDateTime startDate, LocalDateTime endDate) {
-        Map<String, BigDecimal> allCategories = getCategorySummary(account, startDate, endDate);
-
-        // Filter to only include expenses (negative amounts)
-        Map<String, BigDecimal> expenseCategories = new HashMap<>();
-        for (Map.Entry<String, BigDecimal> entry : allCategories.entrySet()) {
-            if (entry.getValue().signum() < 0) {  // Negative = expense
-                expenseCategories.put(entry.getKey(), entry.getValue().abs());  // Store as positive for display
+            if (t.getAmount().signum() < 0) {
+                // Expense (negative amount)
+                BigDecimal absAmount = t.getAmount().abs();
+                BigDecimal currentTotal = expenseCategories.getOrDefault(categoryName, BigDecimal.ZERO);
+                expenseCategories.put(categoryName, currentTotal.add(absAmount));
+                totalExpenses = totalExpenses.add(absAmount);
+            } else if (t.getAmount().signum() > 0) {
+                // Income (positive amount)
+                BigDecimal currentTotal = incomeCategories.getOrDefault(categoryName, BigDecimal.ZERO);
+                incomeCategories.put(categoryName, currentTotal.add(t.getAmount()));
+                totalIncome = totalIncome.add(t.getAmount());
             }
+            // Ignore zero amounts
         }
 
-        return expenseCategories;
+        // Sort expenses by amount (descending)
+        List<Map.Entry<String, BigDecimal>> sortedExpenses = new ArrayList<>(expenseCategories.entrySet());
+        sortedExpenses.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
+        // Build result
+        Map<String, Object> result = new HashMap<>();
+        result.put("expensesSorted", sortedExpenses);
+        result.put("expenses", expenseCategories);
+        result.put("income", incomeCategories);
+        result.put("totalExpenses", totalExpenses);
+        result.put("totalIncome", totalIncome);
+
+        return result;
     }
 
     /**
-     * Get sorted category summary (by amount, descending)
+     * Get category summary for expenses only (for backwards compatibility)
      */
     public List<Map.Entry<String, BigDecimal>> getSortedCategorySummary(Account account, LocalDateTime startDate, LocalDateTime endDate) {
-        Map<String, BigDecimal> summary = getExpenseCategorySummary(account, startDate, endDate);
-
-        // Convert to list and sort by amount (descending)
-        List<Map.Entry<String, BigDecimal>> sortedList = new ArrayList<>(summary.entrySet());
-        sortedList.sort((a, b) -> b.getValue().compareTo(a.getValue()));
-
-        return sortedList;
+        Map<String, Object> summary = getComprehensiveSpendingSummary(account, startDate, endDate);
+        return (List<Map.Entry<String, BigDecimal>>) summary.get("expensesSorted");
     }
-
 
 }

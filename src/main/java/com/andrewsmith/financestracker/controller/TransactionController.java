@@ -129,7 +129,7 @@ public class TransactionController {
             currentBalance = currentBalance.add(t.getAmount());
         }
 
-        // ✅ ADD THIS - Calculate category summary for current filter
+
         LocalDateTime summaryStartDate;
         LocalDateTime summaryEndDate;
 
@@ -147,17 +147,23 @@ public class TransactionController {
             summaryEndDate = summaryStartDate.plusMonths(1).minusNanos(1);
         }
 
-// Get category summary
+//  Get comprehensive summary with income and expenses separated
+        Map<String, Object> spendingSummary = transactionService.getComprehensiveSpendingSummary(
+                account, summaryStartDate, summaryEndDate
+        );
+
+// Extract data from summary
         List<Map.Entry<String, BigDecimal>> categorySummary =
-                transactionService.getSortedCategorySummary(account, summaryStartDate, summaryEndDate);
+                (List<Map.Entry<String, BigDecimal>>) spendingSummary.get("expensesSorted");
+        BigDecimal totalExpenses = (BigDecimal) spendingSummary.get("totalExpenses");
+        BigDecimal totalIncome = (BigDecimal) spendingSummary.get("totalIncome");
 
-// Calculate total expenses
-        BigDecimal totalExpenses = categorySummary.stream()
-                .map(Map.Entry::getValue)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
+// Add to model
         model.addAttribute("categorySummary", categorySummary);
         model.addAttribute("totalExpenses", totalExpenses);
+        model.addAttribute("totalIncome", totalIncome);
+
+
         // 6️⃣ Model attributes
         model.addAttribute("user", user);
         model.addAttribute("account", account);
